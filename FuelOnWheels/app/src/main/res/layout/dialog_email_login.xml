@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/white">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In or Register with Email"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Fast, reliable login without SMS delays."
+        android:textColor="#757575"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/dialog_et_email"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/blue_border_rounded_cornwe"
+        android:hint="Enter Email Address"
+        android:inputType="textEmailAddress"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="@color/black"
+        android:textCursorDrawable="@drawable/cursor_color"
+        android:cursorVisible="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:textSize="14sp" />
+
+    <EditText
+        android:id="@+id/dialog_et_password"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/blue_border_rounded_cornwe"
+        android:hint="Enter Password (min. 6 characters)"
+        android:inputType="textPassword"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="@color/black"
+        android:textCursorDrawable="@drawable/cursor_color"
+        android:cursorVisible="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/dialog_btn_register"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/blue_fill__rounded_color"
+            android:text="Register"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/dialog_btn_login"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/blue_fill__rounded_color"
+            android:text="Sign In"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

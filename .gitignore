@@ -1,0 +1,36 @@
+# ===================================================================
+# Git Ignore - FuelOnWheels Full Stack Project
+# ===================================================================
+
+# Build & Compiled Output Dirs
+**/build/
+**/target/
+**/.gradle/
+**/bin/
+**/out/
+
+# IDE & Editor Configurations
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.iws
+**/*.ipr
+**/.classpath
+**/.project
+**/.settings/
+
+# Android Local & Native Caches
+**/local.properties
+**/captures/
+**/.externalNativeBuild/
+**/.cxx/
+
+# Compressed Archives & Temp Logs
+*.zip
+*.tar.gz
+*.rar
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db

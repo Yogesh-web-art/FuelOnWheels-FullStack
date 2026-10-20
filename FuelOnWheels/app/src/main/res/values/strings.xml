@@ -1,0 +1,125 @@
+<resources>
+    <string name="app_name">FuelOnWheelsApp</string>
+    <string name="Mobile_Number"><font fgcolor="#000000">Mobile Number</font></string>
+    <string name="OTP"><font fgcolor="#000000">OTP</font></string>
+    <string name="didn_t_get_an_otp_resend">Didn\'t get an OTP? <b>Resend</b></string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="delivery_details">Delivery Details</string>
+    <string name="delivering_to">Delivering To</string>
+    <string name="user">John Doe</string>
+    <string name="address">Address</string>
+    <string name="empire_state_building_address">20 W 34th St, New York, NY 10001, United States</string>
+    <string name="code">Code</string>
+    <string name="delivery_code_1">NFA21BXO1</string>
+    <string name="eta">ETA</string>
+    <string name="order">Order</string>
+    <string name="petrol_1l">Petrol (1L)</string>
+    <string name="minus">-</string>
+    <string name="x1">x1</string>
+    <string name="plus">+</string>
+    <string name="add">Add</string>
+    <string name="diesel_1l">Diesel (1L)</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="petrol_x_quantity">Petrol x Quantity</string>
+    <string name="price">Rs. 350</string>
+    <string name="diesel_x_quantity">Diesel X Quantity</string>
+    <string name="delivery_charges">Delivery Charges</string>
+    <string name="rs_50">Rs. 50/-</string>
+    <string name="total">Total</string>
+    <string name="rs_x">Rs. 550/-</string>
+    <string name="choose_a_method_of_payment">Choose A Method Of Payment</string>
+    <string name="cash_on_delivery">Cash On Delivery</string>
+    <string name="upi">UPI</string>
+    <string name="thank_you">Thank You</string>
+    <string name="you_will_shortly_receive_the_details_of_order_and_delivery_person_through_email_sms">You will shortly receive the details of order and delivery person through Email/SMS.</string>
+    <string name="thank_you_for_placing_your_order">Thank You for placing your Order!</string>
+    <string name="from">From</string>
+    <string name="app_version">1.0.0</string>
+    <string name="distance">Distance</string>
+    <string name="fuel_on_wheels">Fuel On Wheels</string>
+    <string name="setup_profile_n_nplease_complete_nyour_profile_to_ncontinue">Setup Profile\n\nPlease complete\nyour profile to\ncontinue</string>
+    <string name="next">Next</string>
+    <string name="enter_email">Enter email</string>
+    <string name="enter_full_name">Enter Full Name</string>
+    <string name="enter_phone_number">Enter Phone Number</string>
+    <string name="other_login_method">other login method</string>
+    <string name="get_otp">Get OTP</string>
+    <string name="about_us">About Us</string>
+    <string name="version">Version</string>
+    <string name="read_more">Read More</string>
+    <string name="license">License</string>
+    <string name="back">Back</string>
+    <string name="update">Update</string>
+    <string name="update_name">Update Name</string>
+    <string name="john_doe">John Doe</string>
+    <string name="name">Name</string>
+    <string name="your_account_details">Your account details</string>
+    <string name="order_history">Order History</string>
+    <string name="sorry_make_cash_payment_only">Sorry! Make Cash Payment Only</string>
+    <string name="profile">Profile</string>
+    <string name="signout">SIGNOUT</string>
+    <string name="all_copyrights_reserved">All Copyrights Reserved</string>
+    <string name="signed_in_as">Signed In as:</string>
+    <string name="to">To</string>
+    <string name="rs">Rs.</string>
+    <string name="_500">500</string>
+    <string name="fri_nov_12_12_32_pm">Fri, Nov 12, 12:32 PM</string>
+    <string name="hosa_road_bus_stop_hosa_road">Hosa Road Bus Stop, Hosa Road...</string>
+    <string name="id_o20221813574981475391">Id: O20221813574981475391</string>
+    <string name="dayananda_sagar_university">Dayananda Sagar University ....</string>
+    <string name="account">Account</string>
+    <string name="textview">TextView</string>
+    <string name="logo">logo</string>
+    <string name="google_login">google_login</string>
+    <string name="password">password</string>
+    <string name="background">background</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
+    <string name="this_order_with_the_fuel_station_was_delivered">This order with the fuel station was delivered</string>
+    <string name="your_order">Your Order</string>
+    <string name="diesel">Diesel</string>
+    <string name="petrol">Petrol</string>
+    <string name="taxes_amp_charges"><![CDATA[Taxes & charges]]></string>
+    <string name="item_total">Item Total</string>
+    <string name="grand_total">Grand Total</string>
+    <string name="order_details">Order Details</string>
+    <string name="order_number">Order Number</string>
+    <string name="deliver_to">Deliver To</string>
+    <string name="delivery_charge">Delivery charge</string>
+    <string name="phone_number">Phone number</string>
+    <string name="date">Date</string>
+    <string name="download_summary">Download Summary</string>
+    <string name="january_20_2022_at_8_25pm">January 20,2022 at 8:25PM</string>
+    <string name="rs_352">Rs. 352</string>
+    <string name="_1_x_rs_352">1 X Rs. 352</string>
+    <string name="_306_a_b_jpc_road_full_circle_bengaluru">306,A/B JPC Road Full Circle Bengaluru</string>
+    <string name="o2665464652162653">O2665464652162653</string>
+    <string name="_8028525645">8028525645</string>
+    <string name="email_for_support">Email for Support</string>
+    <string name="oxford_university">Oxford University</string>
+    <string name="fuel_station">Fuel Station</string>
+    <string name="update_content_type">Update %s</string>
+    <string name="package_delivered">Package Delivered</string>
+    <string name="eta_placeholder">%d:%02d</string>
+    <string name="order_button_text">Order</string>
+    <string name="next_button_text">Next</string>
+    <string name="place_order_button_text">Place Order</string>
+    <string name="diesel_total_price">Rs. %s</string>
+    <string name="total_petrol_price">Rs. %s</string>
+    <string name="petrol_quant_placeholder">x%d</string>
+    <string name="diesel_quant_placeholder">x%d</string>
+    <string name="petrol_x_quant">Petrol x %d</string>
+    <string name="price_format">Rs. %d/-</string>
+    <string name="rs_format">Rs. %s</string>
+
+    <string name="total_price_format">Rs. %.2f</string>
+    <string name="delivery_charge_format">Rs. %.2f</string>
+    <string name="phone_number_label">Phone Number: %s</string>
+
+    <!-- Default notification channel ID -->
+    <string name="default_notification_channel_id">refuel_anywhere_channel</string>
+
+
+
+</resources>

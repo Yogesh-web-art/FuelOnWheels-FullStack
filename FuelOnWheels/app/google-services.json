@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "768770482828",
+    "firebase_url": "https://fuelonwheels-f6ce9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "fuelonwheels-f6ce9",
+    "storage_bucket": "fuelonwheels-f6ce9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768770482828:android:d45bb197a848fef3dbd1a9",
+        "android_client_info": {
+          "package_name": "com.example.fuelonwheelsapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmxmr2VPRT7s0HNmiONpZhAdRRLM4SwgA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
