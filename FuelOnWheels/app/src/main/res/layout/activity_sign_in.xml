@@ -23,17 +23,17 @@
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/surface_card"
-            app:cardCornerRadius="22dp"
+            app:cardBackgroundColor="#0B1220"
+            app:cardCornerRadius="20dp"
             app:cardElevation="6dp"
-            app:strokeColor="@color/card_border"
-            app:strokeWidth="1dp">
+            app:strokeColor="#1E3A5F"
+            app:strokeWidth="1.5dp">
 
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/logo"
-                android:padding="12dp"
+                android:padding="2dp"
                 android:src="@drawable/logo" />
         </com.google.android.material.card.MaterialCardView>
 

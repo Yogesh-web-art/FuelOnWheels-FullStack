@@ -41,33 +41,19 @@
                 android:layout_width="134dp"
                 android:layout_height="134dp"
                 android:layout_gravity="center"
-                app:cardBackgroundColor="#141F36"
-                app:cardCornerRadius="67dp"
+                app:cardBackgroundColor="#0B1220"
+                app:cardCornerRadius="36dp"
                 app:cardElevation="18dp"
-                app:strokeColor="#3B82F6"
-                app:strokeWidth="2.5dp">
+                app:strokeColor="#38BDF8"
+                app:strokeWidth="2dp">
 
-                <FrameLayout
+                <ImageView
+                    android:id="@+id/imageView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="16dp">
-
-                    <!-- Inner Circular Contrast Disc -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/circle" />
-
-                    <!-- Flame Emblem -->
-                    <ImageView
-                        android:id="@+id/imageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="@string/logo"
-                        android:padding="8dp"
-                        android:scaleType="fitCenter"
-                        app:srcCompat="@drawable/app_icon" />
-                </FrameLayout>
+                    android:contentDescription="@string/logo"
+                    android:scaleType="fitCenter"
+                    app:srcCompat="@drawable/app_icon" />
             </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
