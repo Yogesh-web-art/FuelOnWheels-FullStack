@@ -46,6 +46,8 @@
 
         <activity
             android:name=".signIn.SetupProfileActivity"
+            android:screenOrientation="fullSensor"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="false" />
         <activity
             android:name=".dashboard.DashboardActivity"
@@ -55,6 +57,7 @@
         <activity
             android:name=".signIn.SignInActivity"
             android:screenOrientation="fullSensor"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="false" />
 
         <service

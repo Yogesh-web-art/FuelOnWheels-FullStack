@@ -1,130 +1,201 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/setupContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:background="@color/whiteTextColor"
-    android:focusableInTouchMode="true"
-    android:gravity="center"
+    android:background="@color/bg_slate"
+    android:fillViewport="true"
     android:visibility="invisible"
-    tools:context=".splashScreen.MainActivity"
-    tools:visibility="visible"
-    tools:ignore="Overdraw">
+    tools:visibility="visible">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:visibility="visible"
-        tools:visibility="visible">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <LinearLayout
+        <!-- Top Hero Card with Brand Logo -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    style="@style/viewParent.headerText.NoMode"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:text="@string/setup_profile_n_nplease_complete_nyour_profile_to_ncontinue"
-                    android:textColor="@color/black"
-                    android:textSize="20sp" />
-
-                <ImageView
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentEnd="true"
-                    android:src="@drawable/logo"
-                    android:contentDescription="@string/logo" />
-            </RelativeLayout>
-
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@color/whiteTextColor"
-                app:cardCornerRadius="10dp">
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp">
 
-                <LinearLayout
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:contentDescription="@string/logo"
+                    android:src="@drawable/logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Complete Your Profile"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="Please provide your contact information to finish setting up your account"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Profile Form Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Full Name -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FULL NAME"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/Name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:orientation="vertical">
+                    android:layout_marginTop="6dp"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/Name"
-                        style="@style/parent"
-                        android:layout_marginTop="@dimen/loginViewsMargin">
+                    <EditText
+                        android:id="@+id/setup_et_fname"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:autofillHints="name"
+                        android:background="@drawable/input_field_bg"
+                        android:hint="e.g. Alex Johnson"
+                        android:inputType="textPersonName"
+                        android:maxLines="1"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <EditText
-                            android:id="@+id/setup_et_fname"
-                            style="@style/modifiedEditText"
-                            android:hint="@string/enter_full_name"
-                            android:inputType="textPersonName"
-                            android:maxLines="1"
-                            android:textSize="14sp"
-                            android:autofillHints="name" />
+                <!-- Phone Number -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="PHONE NUMBER"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-                    </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/phoneNum"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/phoneNum"
-                        style="@style/parent"
-                        android:layout_marginTop="@dimen/loginViewsMargin">
+                    <EditText
+                        android:id="@+id/setup_et_phone"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:autofillHints="phone"
+                        android:background="@drawable/input_field_bg"
+                        android:hint="e.g. 9876543210"
+                        android:inputType="phone"
+                        android:maxLength="13"
+                        android:maxLines="1"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <EditText
-                            android:id="@+id/setup_et_phone"
-                            style="@style/modifiedEditText"
-                            android:hint="@string/enter_phone_number"
-                            android:inputType="phone"
-                            android:maxLength="13"
-                            android:maxLines="1"
-                            android:textSize="14sp"
-                            android:autofillHints="phone" />
+                <!-- Email Address -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="EMAIL ADDRESS"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-                    </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    app:boxBackgroundMode="none"
+                    app:hintEnabled="false">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/email"
-                        style="@style/parent"
-                        android:layout_marginTop="@dimen/loginViewsMargin">
+                    <EditText
+                        android:id="@+id/setup_et_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:autofillHints="emailAddress"
+                        android:background="@drawable/input_field_bg"
+                        android:hint="e.g. alex@example.com"
+                        android:inputType="textEmailAddress"
+                        android:maxLines="1"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <EditText
-                            android:id="@+id/setup_et_email"
-                            style="@style/modifiedEditText"
-                            android:autofillHints="emailAddress"
-                            android:hint="@string/enter_email"
-                            android:inputType="textEmailAddress"
-                            android:maxLines="1"
-                            android:textColorHint="#004D40"
-                            android:textSize="14sp" />
+                <!-- Submit Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/setup_btn_next"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="24dp"
+                    android:backgroundTint="@color/brand_primary"
+                    android:text="Continue to Dashboard →"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp"
+                    app:elevation="4dp" />
 
-                    </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-                    <Button
-                        android:id="@+id/setup_btn_next"
-                        style="@style/loginButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="@dimen/loginViewsMargin"
-                        android:text="@string/next" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </LinearLayout>
-    </ScrollView>
-
-
-</RelativeLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

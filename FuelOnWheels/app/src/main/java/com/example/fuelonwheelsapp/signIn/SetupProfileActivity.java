@@ -106,9 +106,11 @@ public class SetupProfileActivity extends AppCompatActivity {
         progressDialog.show();
         userViewModel.saveUserDetailsAsProfile(user);
         userViewModel.dataSavedSuccessfully.observe(this, aBoolean -> {
-            if (aBoolean) {
+            if (aBoolean != null && aBoolean) {
                 progressDialog.dismiss();
-            } else {
+                gotoDashboardActivity();
+                finish();
+            } else if (aBoolean != null) {
                 progressDialog.dismiss();
                 Toast.makeText(SetupProfileActivity.this, "Some error occurred while saving profile", Toast.LENGTH_SHORT).show();
             }

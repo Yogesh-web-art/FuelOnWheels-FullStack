@@ -11,28 +11,35 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.example.fuelonwheelsapp.R;
+import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -46,44 +53,32 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import androidx.core.content.res.ResourcesCompat;
-
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link HomeFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class HomeFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final String MY_PREFS_NAME = "UserData";
 
     private FOWViewModel viewModel;
 
-    private static final String TAG = "HomeFragment.java";
+    private static final String TAG = "HomeFragment";
     private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
     private MapView map = null;
     private static final XYTileSource OSM_DE = new XYTileSource("OSMDe", 0, 19, 256, ".png", new String[] { "https://tile.openstreetmap.de/" }, "OpenStreetMap contributors");
     private Context ctx;
     private IMapController mapController;
     private LocationManager locationManager;
+    private TextView tvCurrentAddress;
+    private View fabRecenter;
+    private GeoPoint currentUserGeoPoint;
+    private boolean hasCenteredMap = false;
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback fusedLocationCallback;
 
     public HomeFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment HomeFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
@@ -93,23 +88,10 @@ public class HomeFragment extends Fragment {
         return fragment;
     }
 
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        Log.d(TAG, "onAttach");
-
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
-        if (getArguments() != null) {
-            // TODO: Rename and change types of parameters
-            String mParam1 = getArguments().getString(ARG_PARAM1);
-            String mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         ctx = getContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
@@ -122,20 +104,29 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         configureMap(view);
+
+        tvCurrentAddress = view.findViewById(R.id.tv_current_address);
+        fabRecenter = view.findViewById(R.id.fab_recenter);
+
+        if (fabRecenter != null) {
+            fabRecenter.setOnClickListener(v -> {
+                if (currentUserGeoPoint != null && mapController != null) {
+                    mapController.animateTo(currentUserGeoPoint, 17.0, 500L);
+                    Toast.makeText(requireContext(), "Centered on your GPS location", Toast.LENGTH_SHORT).show();
+                } else {
+                    configureLocationManager();
+                }
+            });
+        }
+
         requestPermissionsIfNecessary(new String[]{
-                // if you need to show the current location, uncomment the line below
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                // WRITE_EXTERNAL_STORAGE is required in order to show the map
+                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
         });
+
         configureLocationManager();
         return view;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        Log.d(TAG, "onViewCreated");
-        super.onViewCreated(view, savedInstanceState);
     }
 
     @Override
@@ -143,10 +134,9 @@ public class HomeFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated");
 
-
         viewModel.getRoad().observe(getViewLifecycleOwner(), road -> {
             Log.d(TAG, "In viewModel.getRoad().observe");
-            if (road != null) {
+            if (road != null && map != null) {
                 Log.d(TAG, "Road variable is NOT null");
                 Drawable poiIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default_focused_base, null);
                 Marker poiMarker = new Marker(map);
@@ -161,8 +151,6 @@ public class HomeFragment extends Fragment {
                 roadOverlay.getOutlinePaint().setStrokeWidth(30.0f);
                 map.getOverlays().add(roadOverlay);
                 map.invalidate();
-            } else {
-                Log.d(TAG, "Road variable is null");
             }
         });
 
@@ -194,116 +182,145 @@ public class HomeFragment extends Fragment {
         });
 
         viewModel.getDelivered().observe(getViewLifecycleOwner(), aBoolean -> {
-            if (aBoolean != null && aBoolean) {
-                for (int i = 0; i < map.getOverlays().size(); i++) {
+            if (aBoolean != null && aBoolean && map != null) {
+                for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
                     try {
                         Overlay overlay = map.getOverlays().get(i);
-                        if (overlay instanceof Polyline && ((Polyline) overlay).getId().equals("road")) {
-                            Log.d(TAG, "road:" + i);
-                            map.getOverlays().remove(overlay);
-                            map.invalidate();
+                        if (overlay instanceof Polyline && "road".equals(((Polyline) overlay).getId())) {
+                            map.getOverlays().remove(i);
+                        } else if (overlay instanceof Marker &&
+                                ("fuelMarker".equals(((Marker) overlay).getId()) || "driverMarker".equals(((Marker) overlay).getId()))) {
+                            map.getOverlays().remove(i);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-                for (int i = 0; i < map.getOverlays().size(); i++) {
-                    try {
-                        Overlay overlay = map.getOverlays().get(i);
-                        if (overlay instanceof Marker && (((Marker) overlay).getId().equals("fuelMarker") || "driverMarker".equals(((Marker) overlay).getId()))) {
-                            Log.d(TAG, "fuelMarker:" + i);
-                            map.getOverlays().remove(overlay);
-                            map.invalidate();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+                map.invalidate();
             }
         });
-
     }
 
     private final LocationListener locationListener = new LocationListener() {
-
         @Override
         public void onLocationChanged(@NonNull Location location) {
-            // TODO Auto-generated method stub
             updateLocation(location);
-            // continuous tracking active
         }
 
         @Override
-        public void onProviderDisabled(@NonNull String provider) {
-            // TODO Auto-generated method stub
-        }
+        public void onProviderDisabled(@NonNull String provider) {}
 
         @Override
-        public void onProviderEnabled(@NonNull String provider) {
-            // TODO Auto-generated method stub
-        }
+        public void onProviderEnabled(@NonNull String provider) {}
 
         @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            // TODO Auto-generated method stub
-
-        }
-
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
     };
 
     private void configureLocationManager() {
-        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissionsIfNecessary(new String[]{
-                    // if you need to show the current location, uncomment the line below
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    // WRITE_EXTERNAL_STORAGE is required in order to show the map
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
             });
             return;
         }
 
-        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (lastKnownLocation == null) {
-            lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        // 1. Google Play Services Fused Location Provider (high precision, low battery, emulator friendly)
+        try {
+            if (fusedLocationClient == null) {
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+            }
+
+            if (fusedLocationCallback == null) {
+                fusedLocationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(@NonNull LocationResult locationResult) {
+                        if (locationResult == null) return;
+                        for (Location location : locationResult.getLocations()) {
+                            if (location != null) {
+                                updateLocation(location);
+                                break;
+                            }
+                        }
+                    }
+                };
+            }
+
+            fusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
+                if (location != null) {
+                    updateLocation(location);
+                }
+            });
+
+            LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L)
+                    .setMinUpdateIntervalMillis(1500L)
+                    .setMinUpdateDistanceMeters(2.0f)
+                    .build();
+
+            fusedLocationClient.requestLocationUpdates(locationRequest, fusedLocationCallback, Looper.getMainLooper());
+        } catch (Exception e) {
+            Log.e(TAG, "FusedLocationProvider error: " + e.getMessage());
         }
-        if (lastKnownLocation != null) {
-            updateLocation(lastKnownLocation);
-        }
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 5.0f, locationListener);
-        }
-        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 5.0f, locationListener);
+
+        // 2. Hardware GPS / Network fallback
+        try {
+            Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (lastKnown == null) {
+                lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+            if (lastKnown != null && currentUserGeoPoint == null) {
+                updateLocation(lastKnown);
+            }
+
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 2.0f, locationListener);
+            }
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 2.0f, locationListener);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "LocationManager fallback error: " + e.getMessage());
         }
     }
 
     private void updateLocation(Location loc) {
-        Log.d(TAG, "updateLocation: Updating the location here");
-        GeoPoint geoPoint = new GeoPoint(loc.getLatitude(),loc.getLongitude());
+        if (loc == null || map == null) return;
+        Log.d(TAG, "updateLocation: lat=" + loc.getLatitude() + ", lon=" + loc.getLongitude());
+        GeoPoint geoPoint = new GeoPoint(loc.getLatitude(), loc.getLongitude());
+        currentUserGeoPoint = geoPoint;
         viewModel.setUserGeoPoint(geoPoint);
-        Marker startMarker = new Marker(map);
-        startMarker.setPosition(geoPoint);
-        startMarker.setId("userMarker");
-        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        startMarker.setIcon(ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default, null));
-        startMarker.setSnippet("My Location");
-        generateLocation(geoPoint,startMarker);
 
+        Marker startMarker = null;
+        for (int i = 0; i < map.getOverlays().size(); i++) {
+            Overlay overlay = map.getOverlays().get(i);
+            if (overlay instanceof Marker && "userMarker".equals(((Marker) overlay).getId())) {
+                startMarker = (Marker) overlay;
+                break;
+            }
+        }
+
+        if (startMarker == null) {
+            startMarker = new Marker(map);
+            startMarker.setId("userMarker");
+            startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            Drawable markerIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default, null);
+            if (markerIcon != null) {
+                startMarker.setIcon(markerIcon);
+            }
+            startMarker.setTitle("My Location");
+            map.getOverlays().add(startMarker);
+        }
+
+        startMarker.setPosition(geoPoint);
+        generateLocation(geoPoint, startMarker);
     }
 
     private void generateLocation(GeoPoint geoPoint, Marker startMarker) {
         String add = "Lat: " + String.format(Locale.US, "%.4f", geoPoint.getLatitude()) +
-                     ", Lng: " + String.format(Locale.US, "%.4f", geoPoint.getLongitude());
+                ", Lng: " + String.format(Locale.US, "%.4f", geoPoint.getLongitude());
 
         try {
             Geocoder geocoder = new Geocoder(requireActivity(), Locale.getDefault());
@@ -317,25 +334,29 @@ public class HomeFragment extends Fragment {
 
         viewModel.setOrderLocation(add);
         viewModel.setUserGeoPoint(geoPoint);
-        mapController.setCenter(geoPoint);
-        mapController.animateTo(geoPoint, 15.0, 500L);
 
-        SharedPreferences.Editor editor = requireActivity().getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE).edit();
-        editor.putString("userLatitude", String.valueOf(geoPoint.getLatitude()));
-        editor.putString("userLongitude", String.valueOf(geoPoint.getLongitude()));
-        editor.apply();
-
-        Toast.makeText(requireActivity(), "Location: " + add, Toast.LENGTH_SHORT).show();
-        startMarker.setSubDescription(add);
-
-        for (int i = 0; i < map.getOverlays().size(); i++) {
-            Overlay overlay = map.getOverlays().get(i);
-            if (overlay instanceof Marker && "userMarker".equals(((Marker) overlay).getId())) {
-                map.getOverlays().remove(i);
-                break;
-            }
+        if (tvCurrentAddress != null) {
+            tvCurrentAddress.setText(add);
         }
-        map.getOverlays().add(startMarker);
+
+        if (startMarker != null) {
+            startMarker.setSnippet(add);
+            startMarker.setSubDescription(add);
+        }
+
+        if (!hasCenteredMap && mapController != null) {
+            hasCenteredMap = true;
+            mapController.setZoom(16.5);
+            mapController.setCenter(geoPoint);
+        }
+
+        try {
+            SharedPreferences.Editor editor = requireActivity().getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE).edit();
+            editor.putString("userLatitude", String.valueOf(geoPoint.getLatitude()));
+            editor.putString("userLongitude", String.valueOf(geoPoint.getLongitude()));
+            editor.apply();
+        } catch (Exception ignored) {}
+
         map.invalidate();
     }
 
@@ -348,17 +369,15 @@ public class HomeFragment extends Fragment {
                     requireActivity(),
                     permissionsToRequest.toArray(new String[0]),
                     REQUEST_PERMISSIONS_REQUEST_CODE);
+        } else {
+            configureLocationManager();
         }
     }
-
-
 
     private void requestPermissionsIfNecessary(String[] permissions) {
         ArrayList<String> permissionsToRequest = new ArrayList<>();
         for (String permission : permissions) {
-            if (ContextCompat.checkSelfPermission(requireActivity(), permission)
-                    != PackageManager.PERMISSION_GRANTED) {
-                // Permission is not granted
+            if (ContextCompat.checkSelfPermission(requireActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
                 permissionsToRequest.add(permission);
             }
         }
@@ -370,7 +389,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-
     private void configureMap(View view) {
         map = (MapView) view.findViewById(R.id.map);
         map.setTileSource(OSM_DE);
@@ -380,7 +398,7 @@ public class HomeFragment extends Fragment {
         mRotationGestureOverlay.setEnabled(true);
         map.getOverlays().add(mRotationGestureOverlay);
         map.invalidate();
-        Log.d("HomeFragment.java", "in configureMap()");
+        Log.d(TAG, "in configureMap()");
     }
 
     @Override
@@ -390,16 +408,10 @@ public class HomeFragment extends Fragment {
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
         map.onResume();
-        // when we click home button again after ordering
-        try {
-            Log.d(TAG, "onResume: "+viewModel.getRoad().getValue());
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if(viewModel.getRoad().getValue()!=null && viewModel.getDelivered().getValue()!=null){
-            if(!viewModel.getDelivered().getValue()){
-                Log.d(TAG, "onActivityCreated: handle home click between order");
+        if (viewModel.getRoad().getValue() != null && viewModel.getDelivered().getValue() != null) {
+            if (!viewModel.getDelivered().getValue()) {
+                Log.d(TAG, "onResume: handle home click between order");
                 Drawable poiIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default_focused_base, null);
                 Marker poiMarker = new Marker(map);
                 poiMarker.setTitle("Fuel");
@@ -416,46 +428,30 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            requestPermissionsIfNecessary(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    // WRITE_EXTERNAL_STORAGE is required in order to show the map
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            });
-            return;
+        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            configureLocationManager();
         }
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-        }
-        else{
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        }
-
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG,"onPause");
+        Log.d(TAG, "onPause");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         Configuration.getInstance().save(ctx, prefs);
         map.onPause();
-        locationManager.removeUpdates(locationListener);
+        if (fusedLocationClient != null && fusedLocationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(fusedLocationCallback);
+        }
+        if (locationManager != null && locationListener != null) {
+            locationManager.removeUpdates(locationListener);
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Log.d(TAG,"onStop");
+        Log.d(TAG, "onStop");
     }
 }
