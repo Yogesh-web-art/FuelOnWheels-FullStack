@@ -13,4 +13,12 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <!-- High-End Luxury Splash Screen Theme -->
+    <style name="Theme.FuelOnWheelsApp.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">#090E1B</item>
+        <item name="android:statusBarColor">#0D1629</item>
+        <item name="android:navigationBarColor">#04060C</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>

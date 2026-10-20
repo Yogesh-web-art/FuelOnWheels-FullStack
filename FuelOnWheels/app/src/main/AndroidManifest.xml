@@ -72,6 +72,7 @@
         <activity
             android:name=".splashScreen.MainActivity"
             android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.FuelOnWheelsApp.Splash"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
