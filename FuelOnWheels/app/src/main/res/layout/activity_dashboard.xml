@@ -2,24 +2,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/dashboard_main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    android:id="@+id/dashboard_main_layout"
+    android:background="@color/bg_slate"
     tools:context=".dashboard.DashboardActivity">
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigationView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="1dp"
-        android:layout_marginEnd="1dp"
-        android:background="#D5E9F3"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/bottom_navigation_menu" />
-
+    <!-- Fragment Container for Map and Navigation Destinations -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -32,249 +22,271 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/dashboard_navigation" />
 
-    <TableLayout
+    <!-- Modern Floating Delivery Status Card (shown when order active) -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/delivery_details"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
-        android:background="@drawable/bg2"
-        android:backgroundTint="@color/fowGray"
-        android:paddingBottom="5dp"
-        android:shrinkColumns="1"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:visibility="gone"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="invisible">
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp"
+        tools:visibility="visible">
 
-        <TableRow
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/colorPrimary">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <TextView
+            <!-- Card Header: Title & ETA -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_span="2"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/delivery_details"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </TableRow>
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🚚 Delivery In Progress"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-            <TextView
+                <TextView
+                    android:id="@+id/eta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_pill_blue"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="ETA Calculating..."
+                    android:textColor="@color/pill_blue_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/delivering_to"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@color/card_border" />
 
-            <TextView
-                android:id="@+id/delivering_to"
+            <!-- Row: Recipient & Distance -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/user"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:orientation="horizontal">
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Delivering To"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/delivering_to"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Customer"
+                        android:textColor="@color/brand_navy"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Distance"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/dashboard_table_tv_distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-- km"
+                        android:textColor="@color/brand_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Destination Address -->
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/address"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Drop Location"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/delivery_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Your current location"
+                android:textColor="@color/brand_navy"
+                android:textSize="12sp" />
+
+            <!-- Fuel Station Source & Delivery OTP -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/empire_state_building_address"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/from"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dispenser Station"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp" />
 
-            <TextView
-                android:id="@+id/fuel_address"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/empire_state_building_address"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
+                    <TextView
+                        android:id="@+id/fuel_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Nearest Partner Pump"
+                        android:textColor="@color/brand_navy"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                <!-- OTP Code Badge -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_pill_amber"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/code"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OTP CODE"
+                        android:textColor="@color/pill_amber_text"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/delivery_code"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/delivery_code_1"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
+                    <TextView
+                        android:id="@+id/delivery_code"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.1"
+                        android:text="----"
+                        android:textColor="@color/pill_amber_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/distance"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/dashboard_table_tv_distance"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text=""
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text="@string/eta"
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/eta"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-condensed-medium"
-                android:padding="10dp"
-                android:text=""
-                android:textAlignment="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
-        </TableRow>
-    </TableLayout>
-
-    <Button
-        android:id="@+id/next_button"
-        android:layout_width="0dp"
-        android:layout_height="55dp"
-        android:background="@color/colorPrimary"
-        android:fontFamily="sans-serif-condensed-medium"
-        android:text="@string/order"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent" />
-
+    <!-- Overlay Container for Order Setup (OrderFragment slides up here) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView2"
-        android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/next_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Overlay Container for Payment Summary (PaymentFragment slides up here) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView3"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/next_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Full-screen Container for Order Confirmation (ThankYouFragment) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView4"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Modern Floating Pill Action Button -->
+    <Button
+        android:id="@+id/next_button"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_primary_button"
+        app:backgroundTint="@null"
+        android:elevation="8dp"
+        android:fontFamily="sans-serif-medium"
+        android:stateListAnimator="@null"
+        android:text="@string/order"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Modern Curved Bottom Navigation Bar -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@drawable/bg_bottom_nav"
+        app:elevation="16dp"
+        app:itemIconSize="22dp"
+        app:itemIconTint="@color/nav_item_selector"
+        app:itemTextColor="@color/nav_item_selector"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_navigation_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

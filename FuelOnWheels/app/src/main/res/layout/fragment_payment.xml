@@ -1,234 +1,260 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/colorTertiary"
-    tools:context=".splashScreen.MainActivity">
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_order_sheet"
+    android:elevation="16dp"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="16dp"
+    tools:context=".dashboard.PaymentFragment">
 
-    <ScrollView
+    <!-- Bottom Sheet Drag Handle -->
+    <View
+        android:layout_width="44dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/card_elevated_rounded"
+        android:backgroundTint="#CBD5E1" />
+
+    <!-- Sheet Header -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order Summary"
+                android:textColor="@color/brand_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Review your fuel delivery bill"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/badge_pill_green"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp"
+            android:text="● Verified Rates"
+            android:textColor="@color/pill_green_text"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- BILL SUMMARY CARD -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <TableLayout
-                android:id="@+id/tableLayout"
+            <!-- Petrol Row -->
+            <LinearLayout
+                android:id="@+id/petrol_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/bg2"
-                android:backgroundTint="@color/fowGray"
-                android:paddingBottom="5dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/colorPrimary">
-
-                    <TextView
-                        android:id="@+id/textView12"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_span="2"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/order_summary"
-                        android:textAlignment="center"
-                        android:textColor="@color/colorSecondary"
-                        android:textSize="20sp" />
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/petrol_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TextView
-                        android:id="@+id/petrol_x_quant"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/petrol_x_quantity"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:id="@+id/petrol_price"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/price"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/diesel_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TextView
-                        android:id="@+id/diesel_x_quant"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/diesel_x_quantity"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:id="@+id/diesel_price"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/price"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-                </TableRow>
-
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TextView
-                        android:id="@+id/delivery"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/delivery_charges"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:id="@+id/delivery_charges"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/rs_50"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-                </TableRow>
-
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <TextView
-                        android:id="@+id/total"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/total"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-
-                    <TextView
-                        android:id="@+id/total_price"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/rs_x"
-                        android:textAlignment="center"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-                </TableRow>
-            </TableLayout>
-
-            <RelativeLayout
-                android:id="@+id/relativeLayout"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/bg2"
-                android:backgroundTint="@color/fowGray"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tableLayout">
+                android:layout_marginBottom="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView17"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/colorPrimary"
-                    android:fontFamily="sans-serif-condensed-medium"
-                    android:padding="10dp"
-                    android:text="@string/choose_a_method_of_payment"
-                    android:textAlignment="center"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="20sp" />
+                    android:id="@+id/petrol_x_quant"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="⛽ Petrol x 1"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <RadioGroup
-                    android:id="@+id/radioGroup"
-                    android:layout_width="match_parent"
-                    android:layout_height="150dp"
-                    android:layout_below="@+id/textView17"
-                    android:checkedButton="@id/radioButton3"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
+                <TextView
+                    android:id="@+id/petrol_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹100.00"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                    <RadioButton
-                        android:id="@+id/radioButton3"
-                        android:layout_width="match_parent"
-                        android:layout_height="75dp"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/cash_on_delivery"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
+            <!-- Diesel Row -->
+            <LinearLayout
+                android:id="@+id/diesel_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                    <RadioButton
-                        android:id="@+id/radioButton4"
-                        android:layout_width="match_parent"
-                        android:layout_height="75dp"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:padding="10dp"
-                        android:text="@string/upi"
-                        android:textColor="#616161"
-                        android:textSize="20sp" />
-                </RadioGroup>
-            </RelativeLayout>
+                <TextView
+                    android:id="@+id/diesel_x_quant"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🛢️ Diesel x 1"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
+                <TextView
+                    android:id="@+id/diesel_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹94.00"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Delivery Fee Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🚚 Delivery &amp; Handling Fee"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/delivery_charges"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹50.00"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Divider Line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="12dp"
+                android:background="@color/card_border" />
+
+            <!-- Total Payable Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Total Amount"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/total_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="₹150.00"
+                    android:textColor="@color/brand_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </com.google.android.material.card.MaterialCardView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- PAYMENT METHOD CARD -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeColor="@color/card_border"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Payment Method"
+                android:textColor="@color/brand_navy"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/radioGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checkedButton="@id/radioButton3">
+
+                <RadioButton
+                    android:id="@+id/radioButton3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:buttonTint="@color/brand_primary"
+                    android:paddingStart="8dp"
+                    android:text="💵 Cash / UPI on Delivery (COD)"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/radioButton4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/brand_primary"
+                    android:paddingStart="8dp"
+                    android:text="📱 Online Payment (Instant UPI / Cards)"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

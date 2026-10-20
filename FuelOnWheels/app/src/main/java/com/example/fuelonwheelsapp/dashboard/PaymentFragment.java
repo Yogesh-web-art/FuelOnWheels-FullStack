@@ -29,7 +29,7 @@ public class PaymentFragment extends Fragment {
     private static final String ARG_PARAM2 = "param2";
 
     TextView petrolXQuant, dieselXQuant,petrolPrice,dieselPrice,totalPrice;
-    TableRow petrolRow, dieselRow;
+    View petrolRow, dieselRow;
 
     public PaymentFragment() {
         // Required empty public constructor

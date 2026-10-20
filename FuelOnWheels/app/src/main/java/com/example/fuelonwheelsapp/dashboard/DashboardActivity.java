@@ -44,7 +44,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private int homeState;
     private Button nextButton;
-    private TableLayout deliveryDetails;
+    private View deliveryDetails;
     private TextView eta;
     private FOWViewModel viewModel;
     private ProgressDialog progressDialog;
@@ -58,6 +58,7 @@ public class DashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        org.osmdroid.config.Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
         setContentView(R.layout.activity_dashboard);
         Intent intent = getIntent();
         fullName = intent.getStringExtra("fullName");

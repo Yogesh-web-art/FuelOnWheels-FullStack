@@ -66,6 +66,7 @@ public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment.java";
     private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
     private MapView map = null;
+    private static final XYTileSource OSM_DE = new XYTileSource("OSMDe", 0, 19, 256, ".png", new String[] { "https://tile.openstreetmap.de/" }, "OpenStreetMap contributors");
     private Context ctx;
     private IMapController mapController;
     private LocationManager locationManager;
@@ -111,7 +112,7 @@ public class HomeFragment extends Fragment {
         }
         ctx = getContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        if (ctx != null) { Configuration.getInstance().setUserAgentValue(ctx.getPackageName()); }
+        Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
         viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
         locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
     }
@@ -369,21 +370,17 @@ public class HomeFragment extends Fragment {
         }
     }
 
+
     private void configureMap(View view) {
         map = (MapView) view.findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        //map.setTilesScaledToDpi(true);
-        final float scale = requireActivity().getResources().getDisplayMetrics().density;
-        //final int newScale = (int) (256 * scale);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        //map.setBuiltInZoomControls(true);
+        map.setTileSource(OSM_DE);
         map.setMultiTouchControls(true);
         mapController = map.getController();
         RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(map);
         mRotationGestureOverlay.setEnabled(true);
         map.getOverlays().add(mRotationGestureOverlay);
         map.invalidate();
-        Log.d("HomeFragment.java","in configureMap()");
+        Log.d("HomeFragment.java", "in configureMap()");
     }
 
     @Override
@@ -391,6 +388,7 @@ public class HomeFragment extends Fragment {
         super.onResume();
         Log.d(TAG, "onResume");
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
         map.onResume();
         // when we click home button again after ordering
         try {
