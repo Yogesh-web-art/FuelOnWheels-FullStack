@@ -23,7 +23,7 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int SPLASH_DURATION = 3200;
+    private static final int SPLASH_DURATION = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

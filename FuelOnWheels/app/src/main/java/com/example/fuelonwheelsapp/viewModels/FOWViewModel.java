@@ -19,8 +19,8 @@ public class FOWViewModel extends ViewModel {
 
     final FOWRepository repository = new FOWRepository();
 
-    private final MutableLiveData<Integer> petrolQuantInt = new MutableLiveData<>();
-    private final MutableLiveData<Integer> dieselQuantInt = new MutableLiveData<>();
+    private final MutableLiveData<Integer> petrolQuantInt = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> dieselQuantInt = new MutableLiveData<>(0);
     private final MutableLiveData<String> orderLocation = new MutableLiveData<>();
     private final MutableLiveData<GeoPoint> userLocation = new MutableLiveData<>();
     private final MutableLiveData<GeoPoint> fuelCoordinates = new MutableLiveData<>();
@@ -50,11 +50,12 @@ public class FOWViewModel extends ViewModel {
     }
 
     public Integer getPetrolQuantInt() {
-        return petrolQuantInt.getValue();
+        Integer val = petrolQuantInt.getValue();
+        return val != null ? val : 0;
     }
 
     public void setDieselQuantInt(Integer dieselQuantInt) {
-        this.dieselQuantInt.setValue(dieselQuantInt);
+        this.dieselQuantInt.setValue(dieselQuantInt != null ? dieselQuantInt : 0);
     }
 
     public String getOrderLocation() {
@@ -66,7 +67,8 @@ public class FOWViewModel extends ViewModel {
     }
 
     public Integer getDieselQuantInt() {
-        return dieselQuantInt.getValue();
+        Integer val = dieselQuantInt.getValue();
+        return val != null ? val : 0;
     }
 
     public void setFuelLocation(String address) {

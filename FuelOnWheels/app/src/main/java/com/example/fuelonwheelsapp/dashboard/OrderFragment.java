@@ -1,7 +1,6 @@
 package com.example.fuelonwheelsapp.dashboard;
 
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -16,37 +15,21 @@ import android.widget.TextView;
 import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
 import com.example.fuelonwheelsapp.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link OrderFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class OrderFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    Button petrolAdd, dieselAdd, petrolMinus, petrolPlus, dieselMinus, dieselPlus;
-    TextView petrolQuant, dieselQuant;
-    int petrolQuantInt, dieselQuantInt;
+    private Button petrolAdd, dieselAdd, petrolMinus, petrolPlus, dieselMinus, dieselPlus;
+    private TextView petrolQuant, dieselQuant;
+    private int petrolQuantInt = 0;
+    private int dieselQuantInt = 0;
     private FOWViewModel viewModel;
 
     public OrderFragment() {
-        // Required empty public constructor
         super(R.layout.fragment_order);
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment OrderFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static OrderFragment newInstance(String param1, String param2) {
         OrderFragment fragment = new OrderFragment();
         Bundle args = new Bundle();
@@ -59,11 +42,6 @@ public class OrderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            // TODO: Rename and change types of parameters
-            String mParam1 = getArguments().getString(ARG_PARAM1);
-            String mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         TransitionInflater inflater = TransitionInflater.from(requireContext());
         setEnterTransition(inflater.inflateTransition(R.transition.slide_up));
     }
@@ -71,7 +49,6 @@ public class OrderFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_order, container, false);
     }
 
@@ -87,79 +64,91 @@ public class OrderFragment extends Fragment {
         dieselPlus = view.findViewById(R.id.diesel_plus);
         viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
 
-        updatePetrolQuant(0);
-        updateDieselQuant(0);
+        // Pre-load from viewModel if already selected
+        if (viewModel.getPetrolQuantInt() != null && viewModel.getPetrolQuantInt() > 0) {
+            petrolQuantInt = viewModel.getPetrolQuantInt();
+        }
+        if (viewModel.getDieselQuantInt() != null && viewModel.getDieselQuantInt() > 0) {
+            dieselQuantInt = viewModel.getDieselQuantInt();
+        }
 
-        petrolAdd.setOnClickListener(
-                v -> {
-                    petrolMinus.setVisibility(View.VISIBLE);
-                    petrolQuant.setVisibility(View.VISIBLE);
-                    petrolPlus.setVisibility(View.VISIBLE);
-                    petrolAdd.setVisibility(View.GONE);
+        updatePetrolQuant(petrolQuantInt);
+        updateDieselQuant(dieselQuantInt);
 
-                    petrolQuantInt = Integer.parseInt(petrolQuant.getText().toString().substring(1));
-                    updatePetrolQuant(1);
-                }
-        );
-        petrolMinus.setOnClickListener(
-                v -> {
-                    petrolQuantInt--;
-                    updatePetrolQuant(petrolQuantInt);
-                }
-        );
-        petrolPlus.setOnClickListener(
-                v -> {
-                    petrolQuantInt++;
-                    updatePetrolQuant(petrolQuantInt);
-                }
-        );
+        petrolAdd.setOnClickListener(v -> {
+            petrolQuantInt = 5; // Default 5L on 1st tap (standard minimum for fuel delivery)
+            updatePetrolQuant(petrolQuantInt);
+        });
 
-        dieselAdd.setOnClickListener(
-                v -> {
-                    dieselMinus.setVisibility(View.VISIBLE);
-                    dieselQuant.setVisibility(View.VISIBLE);
-                    dieselPlus.setVisibility(View.VISIBLE);
-                    dieselAdd.setVisibility(View.GONE);
+        petrolMinus.setOnClickListener(v -> {
+            if (petrolQuantInt > 1) {
+                petrolQuantInt--;
+            } else {
+                petrolQuantInt = 0;
+            }
+            updatePetrolQuant(petrolQuantInt);
+        });
 
-                    dieselQuantInt = Integer.parseInt(dieselQuant.getText().toString().substring(1));
-                    updateDieselQuant(1);
-                }
-        );
-        dieselMinus.setOnClickListener(
-                v -> {
-                    dieselQuantInt--;
-                    updateDieselQuant(dieselQuantInt);
-                }
-        );
-        dieselPlus.setOnClickListener(
-                v -> {
-                    dieselQuantInt++;
-                    updateDieselQuant(dieselQuantInt);
-                }
-        );
+        petrolPlus.setOnClickListener(v -> {
+            if (petrolQuantInt < 100) {
+                petrolQuantInt++;
+                updatePetrolQuant(petrolQuantInt);
+            }
+        });
+
+        dieselAdd.setOnClickListener(v -> {
+            dieselQuantInt = 5; // Default 5L on 1st tap
+            updateDieselQuant(dieselQuantInt);
+        });
+
+        dieselMinus.setOnClickListener(v -> {
+            if (dieselQuantInt > 1) {
+                dieselQuantInt--;
+            } else {
+                dieselQuantInt = 0;
+            }
+            updateDieselQuant(dieselQuantInt);
+        });
+
+        dieselPlus.setOnClickListener(v -> {
+            if (dieselQuantInt < 200) {
+                dieselQuantInt++;
+                updateDieselQuant(dieselQuantInt);
+            }
+        });
     }
 
     private void updatePetrolQuant(int quant) {
-        if(quant == 0) {
+        petrolQuantInt = quant;
+        if (quant <= 0) {
             petrolMinus.setVisibility(View.GONE);
             petrolQuant.setVisibility(View.GONE);
             petrolPlus.setVisibility(View.GONE);
             petrolAdd.setVisibility(View.VISIBLE);
         } else {
-            petrolQuant.setText("x"+petrolQuantInt);
+            petrolMinus.setVisibility(View.VISIBLE);
+            petrolQuant.setVisibility(View.VISIBLE);
+            petrolPlus.setVisibility(View.VISIBLE);
+            petrolAdd.setVisibility(View.GONE);
+            petrolQuant.setText(quant + "L");
         }
-        viewModel.setPetrolQuantInt(petrolQuantInt);
+        viewModel.setPetrolQuantInt(quant);
     }
 
     private void updateDieselQuant(int quant) {
-        if(quant == 0) {
+        dieselQuantInt = quant;
+        if (quant <= 0) {
             dieselMinus.setVisibility(View.GONE);
             dieselQuant.setVisibility(View.GONE);
             dieselPlus.setVisibility(View.GONE);
             dieselAdd.setVisibility(View.VISIBLE);
         } else {
-            dieselQuant.setText("x"+dieselQuantInt);
+            dieselMinus.setVisibility(View.VISIBLE);
+            dieselQuant.setVisibility(View.VISIBLE);
+            dieselPlus.setVisibility(View.VISIBLE);
+            dieselAdd.setVisibility(View.GONE);
+            dieselQuant.setText(quant + "L");
         }
-        viewModel.setDieselQuantInt(dieselQuantInt); // Update class-level variable
+        viewModel.setDieselQuantInt(quant);
     }
 }

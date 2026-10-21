@@ -60,7 +60,7 @@
             android:paddingTop="4dp"
             android:paddingEnd="10dp"
             android:paddingBottom="4dp"
-            android:text="⚡ 15-20 Min"
+            android:text="15-20 mins"
             android:textColor="@color/pill_blue_text"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -85,13 +85,14 @@
             android:padding="12dp">
 
             <!-- Fuel Icon Badge -->
-            <TextView
+            <ImageView
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:background="@drawable/badge_pill_amber"
-                android:gravity="center"
-                android:text="⛽"
-                android:textSize="22sp" />
+                android:padding="10dp"
+                android:contentDescription="Petrol"
+                android:src="@drawable/ic_baseline_local_gas_station_24"
+                app:tint="@color/pill_amber_text" />
 
             <!-- Title & Price Info -->
             <LinearLayout
@@ -209,13 +210,14 @@
             android:padding="12dp">
 
             <!-- Fuel Icon Badge -->
-            <TextView
+            <ImageView
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:background="@drawable/badge_pill_green"
-                android:gravity="center"
-                android:text="🛢️"
-                android:textSize="22sp" />
+                android:padding="10dp"
+                android:contentDescription="Diesel"
+                android:src="@drawable/ic_baseline_local_gas_station_24"
+                app:tint="@color/pill_green_text" />
 
             <!-- Title & Price Info -->
             <LinearLayout

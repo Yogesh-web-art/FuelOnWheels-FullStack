@@ -1,50 +1,30 @@
 package com.example.fuelonwheelsapp.dashboard;
 
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-
 import android.transition.TransitionInflater;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
 import com.example.fuelonwheelsapp.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PaymentFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class PaymentFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    TextView petrolXQuant, dieselXQuant,petrolPrice,dieselPrice,totalPrice;
-    View petrolRow, dieselRow;
+    private TextView petrolXQuant, dieselXQuant, petrolPrice, dieselPrice, totalPrice;
+    private View petrolRow, dieselRow;
 
     public PaymentFragment() {
-        // Required empty public constructor
         super(R.layout.fragment_payment);
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment PaymentFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static PaymentFragment newInstance(String param1, String param2) {
         PaymentFragment fragment = new PaymentFragment();
         Bundle args = new Bundle();
@@ -58,7 +38,6 @@ public class PaymentFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            // TODO: Rename and change types of parameters
             String mParam1 = getArguments().getString(ARG_PARAM1);
             String mParam2 = getArguments().getString(ARG_PARAM2);
         }
@@ -69,12 +48,12 @@ public class PaymentFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_payment, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         FOWViewModel viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
         petrolXQuant = view.findViewById(R.id.petrol_x_quant);
@@ -85,18 +64,17 @@ public class PaymentFragment extends Fragment {
         dieselPrice = view.findViewById(R.id.diesel_price);
         totalPrice = view.findViewById(R.id.total_price);
 
-        petrolXQuant.setText("Petrol x " + viewModel.getPetrolQuantInt());
-        petrolPrice.setText("Rs."+(viewModel.getPetrolQuantInt().intValue() * 100)+"/-");
-        dieselXQuant.setText("Diesel x " + viewModel.getDieselQuantInt());
-        dieselPrice.setText("Rs."+(viewModel.getDieselQuantInt().intValue() * 94)+"/-");
-        totalPrice.setText("Rs."+(viewModel.getPetrolQuantInt().intValue()*100
-                + viewModel.getDieselQuantInt().intValue()*94+50)+"/-");
+        int petrol = (viewModel.getPetrolQuantInt() != null) ? viewModel.getPetrolQuantInt() : 0;
+        int diesel = (viewModel.getDieselQuantInt() != null) ? viewModel.getDieselQuantInt() : 0;
+        int total = (petrol * 100) + (diesel * 94) + 50;
 
-        petrolRow.setVisibility(View.VISIBLE);
-        dieselRow.setVisibility(View.VISIBLE);
-        if(viewModel.getPetrolQuantInt().intValue() == 0)
-            petrolRow.setVisibility(View.GONE);
-        if(viewModel.getDieselQuantInt().intValue() == 0)
-            dieselRow.setVisibility(View.GONE);
+        petrolXQuant.setText("Petrol x " + petrol + "L");
+        petrolPrice.setText("₹" + (petrol * 100));
+        dieselXQuant.setText("Diesel x " + diesel + "L");
+        dieselPrice.setText("₹" + (diesel * 94));
+        totalPrice.setText("₹" + total);
+
+        petrolRow.setVisibility(petrol > 0 ? View.VISIBLE : View.GONE);
+        dieselRow.setVisibility(diesel > 0 ? View.VISIBLE : View.GONE);
     }
 }

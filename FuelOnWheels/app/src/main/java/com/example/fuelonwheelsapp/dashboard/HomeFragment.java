@@ -51,7 +51,9 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.Locale;
+import android.os.Handler;
 
 public class HomeFragment extends Fragment {
 
@@ -319,29 +321,19 @@ public class HomeFragment extends Fragment {
     }
 
     private void generateLocation(GeoPoint geoPoint, Marker startMarker) {
-        String add = "Lat: " + String.format(Locale.US, "%.4f", geoPoint.getLatitude()) +
+        String fallbackAdd = "Lat: " + String.format(Locale.US, "%.4f", geoPoint.getLatitude()) +
                 ", Lng: " + String.format(Locale.US, "%.4f", geoPoint.getLongitude());
 
-        try {
-            Geocoder geocoder = new Geocoder(requireActivity(), Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
-            if (addresses != null && !addresses.isEmpty() && addresses.get(0).getAddressLine(0) != null) {
-                add = addresses.get(0).getAddressLine(0);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Geocoder error: " + e.getMessage());
-        }
-
-        viewModel.setOrderLocation(add);
+        viewModel.setOrderLocation(fallbackAdd);
         viewModel.setUserGeoPoint(geoPoint);
 
         if (tvCurrentAddress != null) {
-            tvCurrentAddress.setText(add);
+            tvCurrentAddress.setText(fallbackAdd);
         }
 
         if (startMarker != null) {
-            startMarker.setSnippet(add);
-            startMarker.setSubDescription(add);
+            startMarker.setSnippet(fallbackAdd);
+            startMarker.setSubDescription(fallbackAdd);
         }
 
         if (!hasCenteredMap && mapController != null) {
@@ -351,26 +343,72 @@ public class HomeFragment extends Fragment {
         }
 
         try {
-            SharedPreferences.Editor editor = requireActivity().getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE).edit();
-            editor.putString("userLatitude", String.valueOf(geoPoint.getLatitude()));
-            editor.putString("userLongitude", String.valueOf(geoPoint.getLongitude()));
-            editor.apply();
+            Context act = getContext();
+            if (act != null) {
+                SharedPreferences.Editor editor = act.getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE).edit();
+                editor.putString("userLatitude", String.valueOf(geoPoint.getLatitude()));
+                editor.putString("userLongitude", String.valueOf(geoPoint.getLongitude()));
+                editor.apply();
+            }
         } catch (Exception ignored) {}
 
         map.invalidate();
+
+        // Perform Geocoding on background thread to prevent UI freezing/ANR
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                Context bgContext = getContext();
+                if (bgContext == null) return;
+                Geocoder geocoder = new Geocoder(bgContext, Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
+                if (addresses != null && !addresses.isEmpty() && addresses.get(0).getAddressLine(0) != null) {
+                    String fullAdd = addresses.get(0).getAddressLine(0);
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        if (!isAdded()) return;
+                        viewModel.setOrderLocation(fullAdd);
+                        if (tvCurrentAddress != null) {
+                            tvCurrentAddress.setText(fullAdd);
+                        }
+                        if (startMarker != null) {
+                            startMarker.setSnippet(fullAdd);
+                            startMarker.setSubDescription(fullAdd);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Geocoder notice: " + e.getMessage());
+            }
+        });
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        ArrayList<String> permissionsToRequest = new ArrayList<>(Arrays.asList(permissions).subList(0, grantResults.length));
-        if (permissionsToRequest.size() > 0) {
-            ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    permissionsToRequest.toArray(new String[0]),
-                    REQUEST_PERMISSIONS_REQUEST_CODE);
-        } else {
-            configureLocationManager();
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            boolean granted = false;
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    granted = true;
+                    break;
+                }
+            }
+            if (granted) {
+                configureLocationManager();
+            } else {
+                // Graceful fallback to default/saved coordinates without recursive dialog loops
+                try {
+                    Context c = getContext();
+                    if (c != null) {
+                        SharedPreferences prefs = c.getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE);
+                        double lat = Double.parseDouble(prefs.getString("userLatitude", "28.6139"));
+                        double lon = Double.parseDouble(prefs.getString("userLongitude", "77.2090"));
+                        Location fallback = new Location("saved");
+                        fallback.setLatitude(lat);
+                        fallback.setLongitude(lon);
+                        updateLocation(fallback);
+                    }
+                } catch (Exception ignored) {}
+            }
         }
     }
 

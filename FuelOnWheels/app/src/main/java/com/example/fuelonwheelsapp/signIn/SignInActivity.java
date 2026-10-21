@@ -303,15 +303,15 @@ public class SignInActivity extends AppCompatActivity {
         binding.signInEtPhoneNo.setEnabled(false);
         binding.layoutOtpInput.setVisibility(View.VISIBLE);
         binding.signInBtnGetOtp.setVisibility(View.GONE);
-        binding.tvOtpDisplay.setText("🔐 Login OTP: " + currentGeneratedOtp);
+        binding.tvOtpDisplay.setText("Verification code: " + currentGeneratedOtp);
 
-        // Zero-friction instant auto-fill
+        // Instant auto-fill for testing / demo
         binding.signInEtOtp.setText(currentGeneratedOtp);
         binding.signInEtOtp.setSelection(currentGeneratedOtp.length());
 
         // 3. Post system status-bar notification & Toast
         postOtpNotification(currentGeneratedOtp);
-        Toast.makeText(SignInActivity.this, "Login OTP: " + currentGeneratedOtp + " (Auto-filled)", Toast.LENGTH_LONG).show();
+        Toast.makeText(SignInActivity.this, "Verification code: " + currentGeneratedOtp, Toast.LENGTH_SHORT).show();
         binding.signInBtnNext.requestFocus();
 
         // 4. Also initiate Firebase Phone Auth in background for standard carrier SMS

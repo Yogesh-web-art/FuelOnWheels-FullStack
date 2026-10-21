@@ -20,17 +20,19 @@ import com.example.fuelonwheelsapp.R;
 import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 public class OrderListFragment extends Fragment {
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private static final String TAG ="OrderListFragment";
+    private static final String TAG = "OrderListFragment";
 
     public OrderListFragment() {
         // Required empty public constructor
     }
+
     public static OrderListFragment newInstance(String param1, String param2) {
         OrderListFragment fragment = new OrderListFragment();
         Bundle args = new Bundle();
@@ -47,17 +49,12 @@ public class OrderListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            String mParam1 = getArguments().getString(ARG_PARAM1);
-            String mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_order_list, container, false);
         mShimmerViewContainer = view.findViewById(R.id.shimmer_view_container);
         back_button = view.findViewById(R.id.order_list_back_btn);
@@ -69,28 +66,29 @@ public class OrderListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         back_button.setOnClickListener(view1 -> Navigation.findNavController(view1).navigate(R.id.action_orderListFragment_to_profileFragment));
 
-
-        RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.order_list_recycler_view);
+        RecyclerView recyclerView = view.findViewById(R.id.order_list_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
         recyclerView.setHasFixedSize(true);
+
         viewModel.getResponseAfterFetchingOrderList((orders, exception) -> {
-            Collections.reverse(orders);
-            mShimmerViewContainer.stopShimmerAnimation();
-            mShimmerViewContainer.setVisibility(View.GONE);
-            if(exception==null){
-                // stop shimmer effect
-                Log.d(TAG, "onResponse: Fetched order list successfully");
-                Log.d(TAG, "onResponse: "+orders.size());
-                recyclerView.setAdapter(new OrderListAdapter(orders, (view12, position) -> {
-                    Log.d(TAG, "onClick: clicked order no.->"+position);
-                    viewModel.setOrder(orders.get(position));
-                    Navigation.findNavController(view12).navigate(R.id.action_orderListFragment_to_orderDetailFragment);
-                }));
+            if (!isAdded()) return;
+            if (mShimmerViewContainer != null) {
+                mShimmerViewContainer.stopShimmerAnimation();
+                mShimmerViewContainer.setVisibility(View.GONE);
             }
-            // TODO: It was throwing an error while signOut
-            else{
-                if(exception.equals("ListEmpty"))
-                    Toast.makeText(view.getContext(), "You haven't placed an order yet", Toast.LENGTH_SHORT).show();
+            if (exception == null && orders != null && !orders.isEmpty()) {
+                ArrayList<Order> safeList = new ArrayList<>(orders);
+                Collections.reverse(safeList);
+                recyclerView.setAdapter(new OrderListAdapter(safeList, (view12, position) -> {
+                    if (position >= 0 && position < safeList.size()) {
+                        viewModel.setOrder(safeList.get(position));
+                        Navigation.findNavController(view12).navigate(R.id.action_orderListFragment_to_orderDetailFragment);
+                    }
+                }));
+            } else {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "You haven't placed an order yet", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -98,11 +96,16 @@ public class OrderListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mShimmerViewContainer.startShimmerAnimation();
+        if (mShimmerViewContainer != null) {
+            mShimmerViewContainer.startShimmerAnimation();
+        }
     }
+
     @Override
     public void onPause() {
-        mShimmerViewContainer.stopShimmerAnimation();
+        if (mShimmerViewContainer != null) {
+            mShimmerViewContainer.stopShimmerAnimation();
+        }
         super.onPause();
     }
 }

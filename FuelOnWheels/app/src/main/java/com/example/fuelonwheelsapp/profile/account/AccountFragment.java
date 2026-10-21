@@ -1,6 +1,7 @@
 package com.example.fuelonwheelsapp.profile.account;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,17 +22,11 @@ import com.example.fuelonwheelsapp.R;
 import com.example.fuelonwheelsapp.placeholder.PlaceholderContent;
 import com.example.fuelonwheelsapp.viewModels.FOWViewModel;
 
-/**
- * A fragment representing a list of Items.
- */
 public class AccountFragment extends Fragment {
 
     private FOWViewModel viewModel;
-    private final static String TAG ="AccountFragment";
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
+    private static final String TAG = "AccountFragment";
+
     public AccountFragment() {
     }
 
@@ -56,20 +51,30 @@ public class AccountFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
         ImageView imageView = view.findViewById(R.id.accountList_btn_back);
         imageView.setOnClickListener(view1 -> Navigation.findNavController(view1).navigate(R.id.action_accountFragment_to_profileFragment));
-        // TODO: call this function once and use the field of viewmodel
+
         viewModel.getResponseAsUserProfile().observe(getViewLifecycleOwner(), user -> {
+            if (!isAdded()) return;
             progressBar.setVisibility(View.GONE);
-            viewModel.setUser(user);
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.account_list);
+            SharedPreferences prefs = context.getSharedPreferences("UserData", Context.MODE_PRIVATE);
+
+            String name = (user != null && user.getFullName() != null && !user.getFullName().isEmpty())
+                    ? user.getFullName() : prefs.getString("fullName", "Customer");
+            String phone = (user != null && user.getPhoneNo() != null && !user.getPhoneNo().isEmpty())
+                    ? user.getPhoneNo() : prefs.getString("phoneNo", prefs.getString("userIdentifier", "Not Set"));
+            String email = (user != null && user.getEmail() != null && !user.getEmail().isEmpty())
+                    ? user.getEmail() : prefs.getString("email", "Not Set");
+
+            RecyclerView recyclerView = view.findViewById(R.id.account_list);
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
             PlaceholderContent placeholderContent = new PlaceholderContent();
-            placeholderContent.addPlaceholderItem(0, "Full name", user.getFullName());
-            placeholderContent.addPlaceholderItem(0, "Phone Number", user.getPhoneNo());
-            placeholderContent.addPlaceholderItem(0, "Email", user.getEmail());
-            if (user.getOtp() != null && user.getOtp().length() > 0) {
-                placeholderContent.addPlaceholderItem(0, "Delivery Verification OTP", user.getOtp());
+            placeholderContent.addPlaceholderItem(0, "Full Name", name);
+            placeholderContent.addPlaceholderItem(0, "Phone Number", phone);
+            placeholderContent.addPlaceholderItem(0, "Email", email);
+            if (user != null && user.getOtp() != null && user.getOtp().length() > 0) {
+                placeholderContent.addPlaceholderItem(0, "Delivery Security PIN", user.getOtp());
             }
+
             recyclerView.setAdapter(new AccountRecyclerViewAdapter(placeholderContent.ITEMS, (view12, position) -> {
                 if (position == 0 || position == 2) {
                     Bundle bundle = new Bundle();
@@ -77,9 +82,9 @@ public class AccountFragment extends Fragment {
                     bundle.putString("ContentDesc", placeholderContent.ITEMS.get(position).contentDescription);
                     Navigation.findNavController(view12).navigate(R.id.action_accountFragment_to_accountEditFragment, bundle);
                 } else if (position == 1) {
-                    Toast.makeText(context, "Phone number cannot be changed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Phone number is linked to your account", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(context, "Verification OTP is read-only and automatically updated", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Delivery PIN is automatically verified during fuel drop-off", Toast.LENGTH_SHORT).show();
                 }
             }));
         });
