@@ -81,51 +81,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:letterSpacing="0.15"
-                android:text="ON-DEMAND DOORSTEP REFUELING"
+                android:letterSpacing="0.12"
+                android:text="Doorstep Fuel Delivery"
                 android:textColor="#94A3B8"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <!-- High-Tech Feature Badge Pill -->
-            <LinearLayout
-                android:id="@+id/feature_pill"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/splash_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingTop="7dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="7dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="⚡"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:letterSpacing="0.08"
-                    android:text="FAST • PURE • CONTACTLESS"
-                    android:textColor="#38BDF8"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:textSize="12sp"
+                android:textStyle="normal" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Bottom Status & Enterprise Security Footer -->
+    <!-- Bottom Status Footer -->
     <LinearLayout
         android:id="@+id/bottom_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="36dp"
+        android:layout_marginBottom="40dp"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -136,31 +105,11 @@
         <ProgressBar
             android:id="@+id/splash_progress"
             style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="160dp"
-            android:layout_height="4dp"
-            android:layout_marginBottom="12dp"
+            android:layout_width="140dp"
+            android:layout_height="3dp"
             android:indeterminate="true"
             android:indeterminateTint="#38BDF8"
             android:progressDrawable="@drawable/splash_progress_drawable" />
-
-        <TextView
-            android:id="@+id/tv_loading_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:letterSpacing="0.12"
-            android:text="INITIALIZING REAL-TIME FLEET..."
-            android:textColor="#64748B"
-            android:textSize="10sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:letterSpacing="0.05"
-            android:text="🔒 Bank-Grade 256-Bit SSL • Certified Pure Fuel"
-            android:textColor="#475569"
-            android:textSize="10sp" />
 
     </LinearLayout>
 

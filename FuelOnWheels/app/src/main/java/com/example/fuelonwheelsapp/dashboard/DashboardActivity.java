@@ -159,7 +159,14 @@ public class DashboardActivity extends AppCompatActivity {
                             viewModel.setRoad(response.road);
                             address.setText(viewModel.getOrderLocation() != null ? viewModel.getOrderLocation() : "Your Location");
                             delivering_to.setText(fullName);
-                            deliveryCode.setText(response.orderId);
+
+                            // Delivery handshake verification PIN
+                            String pin = "4829";
+                            if (response.orderId != null && response.orderId.length() >= 4) {
+                                int hash = Math.abs(response.orderId.hashCode() % 9000) + 1000;
+                                pin = String.valueOf(hash);
+                            }
+                            deliveryCode.setText(pin);
 
                             if (response.road != null) {
                                 viewModel.setBuildRoad(true);

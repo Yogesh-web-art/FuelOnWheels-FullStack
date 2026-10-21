@@ -97,7 +97,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="⛽ Petrol x 1"
+                    android:text="Petrol"
                     android:textColor="@color/brand_navy"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -126,7 +126,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="🛢️ Diesel x 1"
+                    android:text="Diesel"
                     android:textColor="@color/brand_navy"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -153,7 +153,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="🚚 Delivery &amp; Handling Fee"
+                    android:text="Delivery &amp; Handling Fee"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
@@ -240,7 +240,7 @@
                     android:layout_marginBottom="4dp"
                     android:buttonTint="@color/brand_primary"
                     android:paddingStart="8dp"
-                    android:text="💵 Cash / UPI on Delivery (COD)"
+                    android:text="Cash / UPI on Delivery (COD)"
                     android:textColor="@color/brand_navy"
                     android:textSize="14sp" />
 
@@ -250,7 +250,7 @@
                     android:layout_height="wrap_content"
                     android:buttonTint="@color/brand_primary"
                     android:paddingStart="8dp"
-                    android:text="📱 Online Payment (Instant UPI / Cards)"
+                    android:text="Online Payment (Instant UPI / Cards)"
                     android:textColor="@color/brand_navy"
                     android:textSize="14sp" />
             </RadioGroup>

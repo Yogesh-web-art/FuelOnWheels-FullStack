@@ -147,12 +147,13 @@
                         android:paddingEnd="14dp"
                         android:visibility="gone">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_marginEnd="10dp"
-                            android:text="👤"
-                            android:textSize="16sp" />
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_baseline_person_24"
+                            app:tint="@color/text_muted" />
 
                         <EditText
                             android:id="@+id/et_full_name"
@@ -177,12 +178,13 @@
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_marginEnd="10dp"
-                            android:text="✉️"
-                            android:textSize="16sp" />
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_mail_outline_24"
+                            app:tint="@color/text_muted" />
 
                         <EditText
                             android:id="@+id/et_email"
@@ -207,12 +209,13 @@
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_marginEnd="10dp"
-                            android:text="🔒"
-                            android:textSize="16sp" />
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_lock_outline_24"
+                            app:tint="@color/text_muted" />
 
                         <EditText
                             android:id="@+id/et_password"

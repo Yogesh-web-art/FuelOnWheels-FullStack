@@ -65,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
         View splashAura = findViewById(R.id.splash_aura);
         View logoCard = findViewById(R.id.logo_card);
         View brandInfo = findViewById(R.id.brand_info_layout);
-        View featurePill = findViewById(R.id.feature_pill);
         View bottomContainer = findViewById(R.id.bottom_container);
 
         if (splashAura != null) {
@@ -106,27 +105,13 @@ public class MainActivity extends AppCompatActivity {
                     .start();
         }
 
-        if (featurePill != null) {
-            featurePill.setAlpha(0f);
-            featurePill.setScaleX(0.9f);
-            featurePill.setScaleY(0.9f);
-            featurePill.animate()
-                    .alpha(1f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setStartDelay(650)
-                    .setDuration(600)
-                    .setInterpolator(new DecelerateInterpolator())
-                    .start();
-        }
-
         if (bottomContainer != null) {
             bottomContainer.setAlpha(0f);
             bottomContainer.setTranslationY(25f);
             bottomContainer.animate()
                     .alpha(1f)
                     .translationY(0f)
-                    .setStartDelay(850)
+                    .setStartDelay(650)
                     .setDuration(600)
                     .setInterpolator(new DecelerateInterpolator())
                     .start();

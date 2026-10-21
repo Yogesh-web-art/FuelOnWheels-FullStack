@@ -321,7 +321,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="🛡️ Quality &amp; Quantity 100% Guaranteed • Certified Dispensers"
+        android:text="Calibrated digital dispensers • 100% quality assured"
         android:textColor="@color/text_muted"
         android:textSize="11sp" />
 
