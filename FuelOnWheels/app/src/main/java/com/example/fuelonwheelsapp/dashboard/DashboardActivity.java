@@ -59,7 +59,13 @@ public class DashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        org.osmdroid.config.Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        org.osmdroid.config.IConfigurationProvider config = org.osmdroid.config.Configuration.getInstance();
+        config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        config.setTileDownloadThreads((short) 5);
+        config.setCacheMapTileCount((short) 32);
+        config.setCacheMapTileOvershoot((short) 16);
+        config.setTileFileSystemCacheMaxBytes(250L * 1024 * 1024);
+        config.setTileFileSystemCacheTrimBytes(200L * 1024 * 1024);
         setContentView(R.layout.activity_dashboard);
 
         Intent intent = getIntent();

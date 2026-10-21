@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="44dp"
+    android:height="44dp"
+    android:viewportWidth="44"
+    android:viewportHeight="44">
+    <!-- Drop Shadow -->
+    <path
+        android:fillAlpha="0.25"
+        android:fillColor="#000000"
+        android:pathData="M22,39 C27.52,39 32,40.34 32,42 C32,43.66 27.52,45 22,45 C16.48,45 12,43.66 12,42 C12,40.34 16.48,39 22,39 Z" />
+    <!-- Pin Body (Amber/Gold) -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M22,2 C13.72,2 7,8.72 7,17 C7,27.5 22,40 22,40 C22,40 37,27.5 37,17 C37,8.72 30.28,2 22,2 Z" />
+    <!-- Pin Inner Border -->
+    <path
+        android:fillColor="#D97706"
+        android:pathData="M22,4 C14.82,4 9,9.82 9,17 C9,25.8 21.2,36.9 22,37.6 C22.8,36.9 35,25.8 35,17 C35,9.82 29.18,4 22,4 Z" />
+    <!-- White Circle Surface -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,17m-8.5,0a8.5,8.5 0 1,1 17,0a8.5,8.5 0 1,1 -17,0" />
+    <!-- Gas Pump Vector Icon inside circle -->
+    <path
+        android:fillColor="#D97706"
+        android:pathData="M24,13.5 L24,12 C24,11.45 23.55,11 23,11 L19,11 C18.45,11 18,11.45 18,12 L18,22 L24,22 L24,18 L24.5,18 C25.05,18 25.5,18.45 25.5,19 L25.5,21.5 C25.5,21.78 25.72,22 26,22 C26.28,22 26.5,21.78 26.5,21.5 L26.5,16.5 C26.5,15.67 25.83,15 25,15 L24,15 L24,13.5 Z M19,13 L23,13 L23,15.5 L19,15.5 L19,13 Z" />
+</vector>

@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
@@ -11,6 +12,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -38,22 +40,28 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.config.IConfigurationProvider;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.compass.CompassOverlay;
+import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.Locale;
-import android.os.Handler;
+import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
 
@@ -66,7 +74,19 @@ public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
     private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
     private MapView map = null;
-    private static final XYTileSource OSM_DE = new XYTileSource("OSMDe", 0, 19, 256, ".png", new String[] { "https://tile.openstreetmap.de/" }, "OpenStreetMap contributors");
+
+    // High-Resolution OpenStreetMap Humanitarian (HOT) Tile Source (Fast global CDN, sharp road labels, rich vibrant cartography, zero watermarks)
+    public static final XYTileSource OSM_HOT = new XYTileSource(
+            "OpenStreetMapHOT",
+            0, 19, 256, ".png",
+            new String[]{
+                    "https://a.tile.openstreetmap.fr/hot/",
+                    "https://b.tile.openstreetmap.fr/hot/"
+            },
+            "© OpenStreetMap contributors, Humanitarian OpenStreetMap Team"
+    );
+
+    private boolean isHotLayer = true;
     private Context ctx;
     private IMapController mapController;
     private LocationManager locationManager;
@@ -76,6 +96,7 @@ public class HomeFragment extends Fragment {
     private boolean hasCenteredMap = false;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback fusedLocationCallback;
+    private Polygon accuracyCircle = null;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -95,8 +116,17 @@ public class HomeFragment extends Fragment {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
         ctx = getContext();
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        
+        // Performance optimizations for fast multi-threaded tile streaming and disk caching
+        IConfigurationProvider config = Configuration.getInstance();
+        config.load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        config.setTileDownloadThreads((short) 5);
+        config.setCacheMapTileCount((short) 32);
+        config.setCacheMapTileOvershoot((short) 16);
+        config.setTileFileSystemCacheMaxBytes(250L * 1024 * 1024);
+        config.setTileFileSystemCacheTrimBytes(200L * 1024 * 1024);
+
         viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
         locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
     }
@@ -113,12 +143,36 @@ public class HomeFragment extends Fragment {
         if (fabRecenter != null) {
             fabRecenter.setOnClickListener(v -> {
                 if (currentUserGeoPoint != null && mapController != null) {
-                    mapController.animateTo(currentUserGeoPoint, 17.0, 500L);
+                    mapController.animateTo(currentUserGeoPoint, 17.5, 600L);
                     Toast.makeText(requireContext(), "Centered on your GPS location", Toast.LENGTH_SHORT).show();
                 } else {
                     configureLocationManager();
                 }
             });
+        }
+
+        // Floating Map Controls: Zoom In, Zoom Out, Map Layers
+        View btnZoomIn = view.findViewById(R.id.btn_zoom_in);
+        if (btnZoomIn != null) {
+            btnZoomIn.setOnClickListener(v -> {
+                if (mapController != null) {
+                    mapController.zoomIn();
+                }
+            });
+        }
+
+        View btnZoomOut = view.findViewById(R.id.btn_zoom_out);
+        if (btnZoomOut != null) {
+            btnZoomOut.setOnClickListener(v -> {
+                if (mapController != null) {
+                    mapController.zoomOut();
+                }
+            });
+        }
+
+        View btnMapLayer = view.findViewById(R.id.btn_map_layer);
+        if (btnMapLayer != null) {
+            btnMapLayer.setOnClickListener(v -> toggleMapLayer());
         }
 
         requestPermissionsIfNecessary(new String[]{
@@ -131,6 +185,20 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
+    private void toggleMapLayer() {
+        if (map == null) return;
+        isHotLayer = !isHotLayer;
+        if (isHotLayer) {
+            map.setTileSource(OSM_HOT);
+            Toast.makeText(requireContext(), "Map: Humanitarian High-Detail", Toast.LENGTH_SHORT).show();
+        } else {
+            map.setTileSource(TileSourceFactory.MAPNIK);
+            Toast.makeText(requireContext(), "Map: OpenStreetMap Standard", Toast.LENGTH_SHORT).show();
+        }
+        map.getTileProvider().clearTileCache();
+        map.invalidate();
+    }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -139,20 +207,7 @@ public class HomeFragment extends Fragment {
         viewModel.getRoad().observe(getViewLifecycleOwner(), road -> {
             Log.d(TAG, "In viewModel.getRoad().observe");
             if (road != null && map != null) {
-                Log.d(TAG, "Road variable is NOT null");
-                Drawable poiIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default_focused_base, null);
-                Marker poiMarker = new Marker(map);
-                poiMarker.setTitle("Fuel");
-                poiMarker.setSnippet(viewModel.getFuelLocation());
-                poiMarker.setPosition(viewModel.getFuelCoordinates().getValue());
-                poiMarker.setIcon(poiIcon);
-                poiMarker.setId("fuelMarker");
-                map.getOverlays().add(poiMarker);
-                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-                roadOverlay.setId("road");
-                roadOverlay.getOutlinePaint().setStrokeWidth(30.0f);
-                map.getOverlays().add(roadOverlay);
-                map.invalidate();
+                renderRoadAndStation(road);
             }
         });
 
@@ -171,8 +226,8 @@ public class HomeFragment extends Fragment {
                     driverMarker.setId("driverMarker");
                     driverMarker.setTitle("Fuel Delivery Partner");
                     driverMarker.setSnippet("En route with your fuel");
-                    driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-                    Drawable truckIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.osm_ic_follow_me, null);
+                    driverMarker.setAnchor(0.5f, 0.5f);
+                    Drawable truckIcon = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_delivery_truck, null);
                     if (truckIcon != null) {
                         driverMarker.setIcon(truckIcon);
                     }
@@ -188,7 +243,8 @@ public class HomeFragment extends Fragment {
                 for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
                     try {
                         Overlay overlay = map.getOverlays().get(i);
-                        if (overlay instanceof Polyline && "road".equals(((Polyline) overlay).getId())) {
+                        if (overlay instanceof Polyline &&
+                                ("road".equals(((Polyline) overlay).getId()) || "roadCasing".equals(((Polyline) overlay).getId()))) {
                             map.getOverlays().remove(i);
                         } else if (overlay instanceof Marker &&
                                 ("fuelMarker".equals(((Marker) overlay).getId()) || "driverMarker".equals(((Marker) overlay).getId()))) {
@@ -201,6 +257,68 @@ public class HomeFragment extends Fragment {
                 map.invalidate();
             }
         });
+    }
+
+    private void renderRoadAndStation(Road road) {
+        if (road == null || map == null) return;
+
+        // Remove existing road / casing / station markers
+        for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
+            Overlay o = map.getOverlays().get(i);
+            if (o instanceof Polyline && ("road".equals(((Polyline) o).getId()) || "roadCasing".equals(((Polyline) o).getId()))) {
+                map.getOverlays().remove(i);
+            } else if (o instanceof Marker && "fuelMarker".equals(((Marker) o).getId())) {
+                map.getOverlays().remove(i);
+            }
+        }
+
+        // 1. Sleek Station Marker
+        Drawable stationPin = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_pin_station, null);
+        Marker poiMarker = new Marker(map);
+        poiMarker.setTitle("Fuel Dispenser Station");
+        poiMarker.setSnippet(viewModel.getFuelLocation());
+        if (viewModel.getFuelCoordinates().getValue() != null) {
+            poiMarker.setPosition(viewModel.getFuelCoordinates().getValue());
+        }
+        if (stationPin != null) {
+            poiMarker.setIcon(stationPin);
+        }
+        poiMarker.setAnchor(0.5f, 0.90f);
+        poiMarker.setId("fuelMarker");
+        map.getOverlays().add(poiMarker);
+
+        // 2. Soft glowing underlay aura/casing
+        Polyline roadCasing = RoadManager.buildRoadOverlay(road);
+        roadCasing.setId("roadCasing");
+        Paint casingPaint = roadCasing.getOutlinePaint();
+        casingPaint.setColor(0x352563EB); // Translucent blue glow
+        casingPaint.setStrokeWidth(34.0f);
+        casingPaint.setStrokeCap(Paint.Cap.ROUND);
+        casingPaint.setStrokeJoin(Paint.Join.ROUND);
+        casingPaint.setAntiAlias(true);
+        map.getOverlays().add(roadCasing);
+
+        // 3. Crisp electric-blue route foreground
+        Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+        roadOverlay.setId("road");
+        Paint roadPaint = roadOverlay.getOutlinePaint();
+        roadPaint.setColor(0xFF2563EB); // Vibrant Royal/Electric Blue
+        roadPaint.setStrokeWidth(16.0f);
+        roadPaint.setStrokeCap(Paint.Cap.ROUND);
+        roadPaint.setStrokeJoin(Paint.Join.ROUND);
+        roadPaint.setAntiAlias(true);
+        map.getOverlays().add(roadOverlay);
+
+        map.invalidate();
+
+        // 4. Smooth auto-framing with padding
+        if (road.mBoundingBox != null) {
+            map.post(() -> {
+                try {
+                    map.zoomToBoundingBox(road.mBoundingBox, true, 200);
+                } catch (Exception ignored) {}
+            });
+        }
     }
 
     private final LocationListener locationListener = new LocationListener() {
@@ -230,7 +348,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // 1. Google Play Services Fused Location Provider (high precision, low battery, emulator friendly)
+        // 1. Google Play Services Fused Location Provider (high precision, low battery)
         try {
             if (fusedLocationClient == null) {
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
@@ -295,6 +413,22 @@ public class HomeFragment extends Fragment {
         currentUserGeoPoint = geoPoint;
         viewModel.setUserGeoPoint(geoPoint);
 
+        // Dynamic GPS Accuracy Circle
+        if (accuracyCircle == null) {
+            accuracyCircle = new Polygon(map);
+            accuracyCircle.setId("accuracyCircle");
+            accuracyCircle.setFillColor(0x152563EB); // Soft translucent blue
+            accuracyCircle.setStrokeColor(0x402563EB);
+            accuracyCircle.setStrokeWidth(2.0f);
+            map.getOverlays().add(0, accuracyCircle);
+        }
+        if (loc.hasAccuracy() && loc.getAccuracy() > 0) {
+            accuracyCircle.setPoints(Polygon.pointsAsCircle(geoPoint, Math.max(loc.getAccuracy(), 15.0)));
+            accuracyCircle.setVisible(true);
+        } else {
+            accuracyCircle.setVisible(false);
+        }
+
         Marker startMarker = null;
         for (int i = 0; i < map.getOverlays().size(); i++) {
             Overlay overlay = map.getOverlays().get(i);
@@ -307,8 +441,8 @@ public class HomeFragment extends Fragment {
         if (startMarker == null) {
             startMarker = new Marker(map);
             startMarker.setId("userMarker");
-            startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-            Drawable markerIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default, null);
+            startMarker.setAnchor(0.5f, 0.90f);
+            Drawable markerIcon = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_pin_user, null);
             if (markerIcon != null) {
                 startMarker.setIcon(markerIcon);
             }
@@ -338,7 +472,7 @@ public class HomeFragment extends Fragment {
 
         if (!hasCenteredMap && mapController != null) {
             hasCenteredMap = true;
-            mapController.setZoom(16.5);
+            mapController.setZoom(17.5);
             mapController.setCenter(geoPoint);
         }
 
@@ -429,12 +563,46 @@ public class HomeFragment extends Fragment {
 
     private void configureMap(View view) {
         map = (MapView) view.findViewById(R.id.map);
-        map.setTileSource(OSM_DE);
+        
+        // 1. High-Detail OSM HOT tiles (Humanitarian OpenStreetMap: fast, clean, zero watermarks)
+        map.setTileSource(OSM_HOT);
+        
+        // 2. High-DPI scaling: scales tiles to the device's native screen density for crisp clarity
+        map.setTilesScaledToDpi(true);
         map.setMultiTouchControls(true);
+        map.setFlingEnabled(true);
+        
+        // 3. Hide default clunky zoom buttons
+        map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
+        
         mapController = map.getController();
+
+        // 4. Two-finger rotation gesture
         RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(map);
         mRotationGestureOverlay.setEnabled(true);
         map.getOverlays().add(mRotationGestureOverlay);
+
+        // 5. Compass Overlay
+        try {
+            CompassOverlay compassOverlay = new CompassOverlay(ctx, new InternalCompassOrientationProvider(ctx), map);
+            compassOverlay.enableCompass();
+            map.getOverlays().add(compassOverlay);
+        } catch (Exception e) {
+            Log.w(TAG, "Compass init warning: " + e.getMessage());
+        }
+
+        // 6. Distance Scale Bar Overlay (bottom-left alignment)
+        try {
+            ScaleBarOverlay scaleBar = new ScaleBarOverlay(map);
+            scaleBar.setCentred(false);
+            scaleBar.setAlignRight(false);
+            scaleBar.setAlignBottom(true);
+            scaleBar.setScaleBarOffset(40, 260);
+            map.getOverlays().add(scaleBar);
+        } catch (Exception e) {
+            Log.w(TAG, "ScaleBar init warning: " + e.getMessage());
+        }
+
         map.invalidate();
         Log.d(TAG, "in configureMap()");
     }
@@ -450,19 +618,7 @@ public class HomeFragment extends Fragment {
         if (viewModel.getRoad().getValue() != null && viewModel.getDelivered().getValue() != null) {
             if (!viewModel.getDelivered().getValue()) {
                 Log.d(TAG, "onResume: handle home click between order");
-                Drawable poiIcon = ResourcesCompat.getDrawable(getResources(), org.osmdroid.library.R.drawable.marker_default_focused_base, null);
-                Marker poiMarker = new Marker(map);
-                poiMarker.setTitle("Fuel");
-                poiMarker.setSnippet(viewModel.getFuelLocation());
-                poiMarker.setPosition(viewModel.getFuelCoordinates().getValue());
-                poiMarker.setIcon(poiIcon);
-                poiMarker.setId("fuelMarker");
-                map.getOverlays().add(poiMarker);
-                Polyline roadOverlay = RoadManager.buildRoadOverlay(viewModel.getRoad().getValue());
-                roadOverlay.setId("road");
-                roadOverlay.getOutlinePaint().setStrokeWidth(30.0f);
-                map.getOverlays().add(roadOverlay);
-                map.invalidate();
+                renderRoadAndStation(viewModel.getRoad().getValue());
             }
         }
 

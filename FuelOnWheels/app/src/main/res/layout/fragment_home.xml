@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".dashboard.HomeFragment">
 
-    <!-- Live OSMDroid Map -->
+    <!-- High-Performance GPU-Accelerated Live Map -->
     <org.osmdroid.views.MapView
         android:id="@+id/map"
         android:layout_width="match_parent"
@@ -111,15 +111,16 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
-            android:paddingTop="8dp"
+            android:paddingTop="9dp"
             android:paddingEnd="12dp"
-            android:paddingBottom="8dp">
+            android:paddingBottom="9dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📍"
-                android:textSize="16sp" />
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="Location"
+                android:src="@drawable/ic_baseline_local_gas_station_24"
+                app:tint="@color/brand_navy" />
 
             <TextView
                 android:id="@+id/tv_current_address"
@@ -135,13 +136,14 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_gps_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/badge_pill_blue"
-                android:paddingStart="6dp"
-                android:paddingTop="2dp"
-                android:paddingEnd="6dp"
-                android:paddingBottom="2dp"
+                android:paddingStart="7dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="7dp"
+                android:paddingBottom="3dp"
                 android:text="GPS ACTIVE"
                 android:textColor="@color/pill_blue_text"
                 android:textSize="9sp"
@@ -149,28 +151,114 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Floating Re-center on My Location Button (GPS FAB) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/fab_recenter"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+    <!-- Floating Map Controls (Right Vertical Stack) -->
+    <LinearLayout
+        android:id="@+id/map_controls_stack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="14dp"
-        app:cardBackgroundColor="@color/surface_card"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
+        android:layout_marginBottom="12dp"
+        android:elevation="8dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/home_rate_chips"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:strokeColor="@color/card_border"
-        app:strokeWidth="1dp">
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="🎯"
-            android:textSize="20sp" />
-    </com.google.android.material.card.MaterialCardView>
+        <!-- Map Layer Switcher (Voyager / Standard OSM) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_map_layer"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="Map Layer"
+                android:src="@drawable/ic_layers_24"
+                app:tint="@color/brand_navy" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Zoom In Button -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_zoom_in"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:contentDescription="Zoom In"
+                android:src="@drawable/ic_zoom_in_24"
+                app:tint="@color/brand_navy" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Zoom Out Button -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_zoom_out"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:contentDescription="Zoom Out"
+                android:src="@drawable/ic_zoom_out_24"
+                app:tint="@color/brand_navy" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Recenter on My Location Button (GPS FAB) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/fab_recenter"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="My Location"
+                android:src="@drawable/ic_my_location_24"
+                app:tint="@color/brand_blue" />
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
     <!-- Bottom Quick Fuel Rate Chips Floating above Order Button -->
     <LinearLayout
@@ -199,10 +287,18 @@
             android:paddingEnd="12dp"
             android:paddingBottom="6dp">
 
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Petrol"
+                android:src="@drawable/ic_baseline_local_gas_station_24"
+                app:tint="@color/pill_amber_text" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⛽ Petrol ₹100/L"
+                android:text="Petrol ₹100/L"
                 android:textColor="@color/pill_amber_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -221,10 +317,18 @@
             android:paddingEnd="12dp"
             android:paddingBottom="6dp">
 
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Diesel"
+                android:src="@drawable/ic_baseline_local_gas_station_24"
+                app:tint="@color/pill_green_text" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🛢️ Diesel ₹94/L"
+                android:text="Diesel ₹94/L"
                 android:textColor="@color/pill_green_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
