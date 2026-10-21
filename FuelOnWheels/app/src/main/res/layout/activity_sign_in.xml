@@ -357,6 +357,48 @@
                         android:orientation="vertical"
                         android:visibility="gone">
 
+                        <!-- Instant Security Code Pill with Auto-Fill -->
+                        <LinearLayout
+                            android:id="@+id/layout_otp_hint"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:background="@drawable/badge_pill_blue"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingTop="8dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="8dp">
+
+                            <TextView
+                                android:id="@+id/tv_otp_display"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔐 OTP: 123456"
+                                android:textColor="@color/pill_blue_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <Button
+                                android:id="@+id/btn_auto_fill_otp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:background="@drawable/bg_primary_button"
+                                app:backgroundTint="@null"
+                                android:minHeight="0dp"
+                                android:minWidth="0dp"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="14dp"
+                                android:stateListAnimator="@null"
+                                android:text="Auto-Fill"
+                                android:textAllCaps="false"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="52dp"

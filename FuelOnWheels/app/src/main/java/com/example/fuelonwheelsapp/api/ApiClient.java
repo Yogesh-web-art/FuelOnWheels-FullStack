@@ -42,7 +42,7 @@ public class ApiClient {
                     .baseUrl(customBaseUrl != null ? customBaseUrl : DEFAULT_BASE_URL)
                     .client(client)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+                    .build();   
 
             apiService = retrofit.create(FuelApiService.class);
         }

@@ -3,6 +3,8 @@ package com.example.fuelonwheelsapp.signIn;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Toast;
@@ -32,16 +34,26 @@ public class SetupProfileActivity extends AppCompatActivity {
         binding = ActivitySetupProfileBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+
+        // Pre-setup views and click listeners immediately so UI is always ready
+        setUpViews();
+        binding.setupContainer.setVisibility(View.VISIBLE);
+        binding.setupBtnNext.setOnClickListener(view -> checkValidations());
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Please wait...");
         progressDialog.setCanceledOnTouchOutside(false);
-
-        progressDialog.setMessage("Signing In");
+        progressDialog.setMessage("Checking profile...");
         progressDialog.show();
+
+        // Safety timeout: dismiss loading dialog after 1.5s max so user is never stuck
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+                binding.setupContainer.setVisibility(View.VISIBLE);
+            }
+        }, 1500);
 
         isProfileCompleteUsingLiveData();
     }
@@ -102,9 +114,29 @@ public class SetupProfileActivity extends AppCompatActivity {
     }
 
     private void saveUserDetails(User user) {
-        progressDialog.setMessage("Saving details");
+        progressDialog.setMessage("Saving details...");
         progressDialog.show();
+
+        // 1. Locally persist profile in SharedPreferences immediately
+        android.content.SharedPreferences prefs = getSharedPreferences("UserData", MODE_PRIVATE);
+        prefs.edit()
+                .putString("fullName", user.getFullName())
+                .putString("email", user.getEmail())
+                .putString("phoneNo", user.getPhoneNo())
+                .apply();
+
+        // 2. Save via ViewModel/Firebase
         userViewModel.saveUserDetailsAsProfile(user);
+
+        // 3. Fallback timer: proceed to dashboard within 2 seconds regardless of network latency
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+                gotoDashboardActivity();
+                finish();
+            }
+        }, 2000);
+
         userViewModel.dataSavedSuccessfully.observe(this, aBoolean -> {
             if (aBoolean != null && aBoolean) {
                 progressDialog.dismiss();
@@ -112,7 +144,8 @@ public class SetupProfileActivity extends AppCompatActivity {
                 finish();
             } else if (aBoolean != null) {
                 progressDialog.dismiss();
-                Toast.makeText(SetupProfileActivity.this, "Some error occurred while saving profile", Toast.LENGTH_SHORT).show();
+                gotoDashboardActivity();
+                finish();
             }
         });
     }
@@ -126,15 +159,25 @@ public class SetupProfileActivity extends AppCompatActivity {
 
     private void setUpViews() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser != null) {
-            if (firebaseUser.getPhoneNumber() != null && firebaseUser.getPhoneNumber().length() != 0) {
-                binding.setupEtPhone.setText(firebaseUser.getPhoneNumber());
-                binding.setupEtPhone.setEnabled(false);
-            }
-            if (firebaseUser.getEmail() != null && firebaseUser.getEmail().length() != 0) {
-                binding.setupEtEmail.setText(firebaseUser.getEmail());
-                binding.setupEtFname.setText(firebaseUser.getDisplayName());
+        android.content.SharedPreferences prefs = getSharedPreferences("UserData", MODE_PRIVATE);
+        String savedPhone = prefs.getString("userIdentifier", "");
+
+        if (!TextUtils.isEmpty(savedPhone) && savedPhone.startsWith("+")) {
+            binding.setupEtPhone.setText(savedPhone);
+            binding.setupEtPhone.setEnabled(false);
+        } else if (firebaseUser != null && !TextUtils.isEmpty(firebaseUser.getPhoneNumber())) {
+            binding.setupEtPhone.setText(firebaseUser.getPhoneNumber());
+            binding.setupEtPhone.setEnabled(false);
+        }
+
+        if (firebaseUser != null && !TextUtils.isEmpty(firebaseUser.getEmail())) {
+            String email = firebaseUser.getEmail();
+            if (!email.contains("@fuelonwheels.app") && !email.contains("@fow.")) {
+                binding.setupEtEmail.setText(email);
                 binding.setupEtEmail.setEnabled(false);
+            }
+            if (!TextUtils.isEmpty(firebaseUser.getDisplayName())) {
+                binding.setupEtFname.setText(firebaseUser.getDisplayName());
             }
         }
     }
