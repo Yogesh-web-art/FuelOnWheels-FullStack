@@ -64,7 +64,15 @@ public class OrderListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        back_button.setOnClickListener(view1 -> Navigation.findNavController(view1).navigate(R.id.action_orderListFragment_to_profileFragment));
+        back_button.setOnClickListener(view1 -> {
+            try {
+                Navigation.findNavController(view1).navigate(R.id.action_orderListFragment_to_profileFragment);
+            } catch (Exception e) {
+                if (getActivity() != null) {
+                    getActivity().onBackPressed();
+                }
+            }
+        });
 
         RecyclerView recyclerView = view.findViewById(R.id.order_list_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireActivity()));
@@ -82,7 +90,11 @@ public class OrderListFragment extends Fragment {
                 recyclerView.setAdapter(new OrderListAdapter(safeList, (view12, position) -> {
                     if (position >= 0 && position < safeList.size()) {
                         viewModel.setOrder(safeList.get(position));
-                        Navigation.findNavController(view12).navigate(R.id.action_orderListFragment_to_orderDetailFragment);
+                        try {
+                            Navigation.findNavController(view12).navigate(R.id.action_orderListFragment_to_orderDetailFragment);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Navigation error: ", e);
+                        }
                     }
                 }));
             } else {

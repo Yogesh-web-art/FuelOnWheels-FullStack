@@ -14,15 +14,8 @@ import android.view.ViewGroup;
 import com.example.fuelonwheelsapp.R;
 import com.example.fuelonwheelsapp.databinding.FragmentPaymentSetUpBinding;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PaymentSetUpFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class PaymentSetUpFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
@@ -32,15 +25,6 @@ public class PaymentSetUpFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment PaymentSetUpFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static PaymentSetUpFragment newInstance(String param1, String param2) {
         PaymentSetUpFragment fragment = new PaymentSetUpFragment();
         Bundle args = new Bundle();
@@ -54,23 +38,35 @@ public class PaymentSetUpFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            // TODO: Rename and change types of parameters
             String mParam1 = getArguments().getString(ARG_PARAM1);
             String mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        binding = FragmentPaymentSetUpBinding.inflate(inflater,container,false);
+        binding = FragmentPaymentSetUpBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        binding.paymentSetUpBackBtn.setOnClickListener(view1 -> Navigation.findNavController(view1).navigate(R.id.action_paymentSetUpFragment_to_profileFragment));
+        binding.paymentSetUpBackBtn.setOnClickListener(view1 -> {
+            try {
+                Navigation.findNavController(view1).navigate(R.id.action_paymentSetUpFragment_to_profileFragment);
+            } catch (Exception e) {
+                if (getActivity() != null) {
+                    getActivity().onBackPressed();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

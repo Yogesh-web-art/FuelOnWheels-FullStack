@@ -58,6 +58,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         org.osmdroid.config.IConfigurationProvider config = org.osmdroid.config.Configuration.getInstance();
         config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");

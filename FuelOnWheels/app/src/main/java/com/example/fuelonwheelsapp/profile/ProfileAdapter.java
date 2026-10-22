@@ -13,51 +13,66 @@ import com.example.fuelonwheelsapp.R;
 
 import java.util.ArrayList;
 
-
-
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ViewHolder> {
     private final ArrayList<ProfileItem> profileItems;
-    private OnItemClickListener onItemClickListener =null;
+    private OnItemClickListener onItemClickListener = null;
 
-    public interface OnItemClickListener{
-        public void onClick(View view,int position);
+    public interface OnItemClickListener {
+        void onClick(View view, int position);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView imageView;
         private final TextView textView;
+        private final TextView subtitleView;
+
         public ViewHolder(View view) {
             super(view);
-            // Define click listener for the ViewHolder's View
-            imageView = (ImageView) view.findViewById(R.id.profile_item_imageView);
-            textView = (TextView) view.findViewById(R.id.profile_item_textView);
-            view.setOnClickListener(view1 -> onItemClickListener.onClick(view1,getAdapterPosition()));
+            imageView = view.findViewById(R.id.profile_item_imageView);
+            textView = view.findViewById(R.id.profile_item_textView);
+            subtitleView = view.findViewById(R.id.profile_item_subtitle);
+            view.setOnClickListener(view1 -> {
+                if (onItemClickListener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    onItemClickListener.onClick(view1, getAdapterPosition());
+                }
+            });
         }
+
         public ImageView getImageView() {
             return imageView;
         }
+
         public TextView getTextView() {
             return textView;
         }
+
+        public TextView getSubtitleView() {
+            return subtitleView;
+        }
     }
 
-    public ProfileAdapter(ArrayList<ProfileItem> dataSet,OnItemClickListener clickListener) {
+    public ProfileAdapter(ArrayList<ProfileItem> dataSet, OnItemClickListener clickListener) {
         this.profileItems = dataSet;
         this.onItemClickListener = clickListener;
-        //notify state changed
     }
+
     @NonNull
     @Override
     public ProfileAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).
-                inflate(R.layout.profile_item,parent,false);
+                inflate(R.layout.profile_item, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ProfileAdapter.ViewHolder holder, int position) {
-        holder.getImageView().setImageResource(profileItems.get(position).getIconId());
-        holder.getTextView().setText(profileItems.get(position).getItem());
+        ProfileItem item = profileItems.get(position);
+        holder.getImageView().setImageResource(item.getIconId());
+        holder.getTextView().setText(item.getItem());
+        if (holder.getSubtitleView() != null && item.getSubtitle() != null && !item.getSubtitle().isEmpty()) {
+            holder.getSubtitleView().setText(item.getSubtitle());
+            holder.getSubtitleView().setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
