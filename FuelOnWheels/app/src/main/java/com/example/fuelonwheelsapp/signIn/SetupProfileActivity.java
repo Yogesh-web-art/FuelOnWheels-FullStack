@@ -28,6 +28,14 @@ public class SetupProfileActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private String fullNameOfUser;
 
+    private void safeDismissProgressDialog() {
+        try {
+            if (!isFinishing() && !isDestroyed() && progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+        } catch (Exception ignored) {}
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
@@ -50,10 +58,8 @@ public class SetupProfileActivity extends AppCompatActivity {
 
         // Safety timeout: dismiss loading dialog after 1.5s max so user is never stuck
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
-                binding.setupContainer.setVisibility(View.VISIBLE);
-            }
+            safeDismissProgressDialog();
+            binding.setupContainer.setVisibility(View.VISIBLE);
         }, 1500);
 
         isProfileCompleteUsingLiveData();
@@ -61,7 +67,7 @@ public class SetupProfileActivity extends AppCompatActivity {
 
     private void isProfileCompleteUsingLiveData() {
         userViewModel.getResponseAsUserProfile().observe(this, user -> {
-            progressDialog.dismiss();
+            safeDismissProgressDialog();
             if (user != null && user.getFullName() != null
                     && user.getFullName().length() > 0
                     && user.getEmail() != null
@@ -131,24 +137,22 @@ public class SetupProfileActivity extends AppCompatActivity {
 
         // 3. Fallback timer: proceed to dashboard within 2 seconds regardless of network latency
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
-                gotoDashboardActivity();
-                finish();
-            }
+            safeDismissProgressDialog();
+            gotoDashboardActivity();
+            finish();
         }, 2000);
 
         userViewModel.dataSavedSuccessfully.observe(this, aBoolean -> {
-            if (aBoolean != null && aBoolean) {
-                progressDialog.dismiss();
-                gotoDashboardActivity();
-                finish();
-            } else if (aBoolean != null) {
-                progressDialog.dismiss();
-                gotoDashboardActivity();
-                finish();
-            }
+            safeDismissProgressDialog();
+            gotoDashboardActivity();
+            finish();
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        safeDismissProgressDialog();
+        super.onDestroy();
     }
 
     private void gotoDashboardActivity() {

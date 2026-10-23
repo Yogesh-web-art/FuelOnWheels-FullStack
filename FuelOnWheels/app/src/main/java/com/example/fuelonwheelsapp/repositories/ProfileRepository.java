@@ -1,6 +1,5 @@
 package com.example.fuelonwheelsapp.repositories;
 
-
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,53 +15,50 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Objects;
-
 public class ProfileRepository {
-    private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+    private static final String TAG = "ProfileRepository";
     private final DatabaseReference rootReference = FirebaseDatabase.getInstance().getReference();
-    private final DatabaseReference profileReference = rootReference.child("users").child(firebaseUser.getUid());
     private User user;
 
-    public ProfileRepository(){
-        Log.d("ProfileRepository",firebaseUser.getUid());
-        //Log.d("ProfileRepository",profileReference.toString());
+    public ProfileRepository() {
     }
 
+    private DatabaseReference getProfileRef() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String uid = (currentUser != null && currentUser.getUid() != null) ? currentUser.getUid() : "guest";
+        return rootReference.child("users").child(uid);
+    }
 
-    public MutableLiveData<User> getResponseFromDatabase(){
+    public MutableLiveData<User> getResponseFromDatabase() {
         MutableLiveData<User> mutableLiveData = new MutableLiveData<>();
-        profileReference.addValueEventListener(new ValueEventListener() {
+        getProfileRef().addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()){
+                if (snapshot.exists()) {
                     user = snapshot.getValue(User.class);
-                    //Log.d("ProfileRepositoryMutble",mutableLiveData.getValue().getPhoneNo()+","+user.getEmail());
                 }
                 mutableLiveData.setValue(user);
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.w(TAG, "Profile fetch cancelled: " + error.getMessage());
             }
         });
         return mutableLiveData;
     }
 
-    public LiveData<Boolean> saveUserData(User user){
+    public LiveData<Boolean> saveUserData(User user) {
         MutableLiveData<Boolean> booleanMutableLiveData = new MutableLiveData<>();
-        String userId = firebaseUser.getUid();
-        profileReference.setValue(user)
+        getProfileRef().setValue(user)
                 .addOnSuccessListener(unused -> {
                     booleanMutableLiveData.setValue(true);
-                    Log.d("ProfileRepository","Saved successfully");
+                    Log.d(TAG, "Saved profile successfully");
                 })
                 .addOnFailureListener(e -> {
                     booleanMutableLiveData.setValue(false);
-                    Log.d("ProfileRepository", Objects.requireNonNull(e.getMessage()));
+                    Log.e(TAG, "Failed saving profile: " + e.getMessage());
                 });
         return booleanMutableLiveData;
     }
-
-
-
 }

@@ -50,6 +50,14 @@ public class SignInActivity extends AppCompatActivity {
     private static final String TAG = "SignInActivity";
     private static final String MY_PREFS_NAME = "UserData";
 
+    private void safeDismissProgressDialog() {
+        try {
+            if (!isFinishing() && !isDestroyed() && progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+        } catch (Exception ignored) {}
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
@@ -156,13 +164,13 @@ public class SignInActivity extends AppCompatActivity {
 
         firebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     Toast.makeText(SignInActivity.this, "Welcome " + email, Toast.LENGTH_SHORT).show();
                     saveUserSession(email, email.split("@")[0]);
                     navigateToDashboardOrSetup();
                 })
                 .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     Log.e(TAG, "Sign in failed: " + e.getMessage());
 
                     if (e instanceof FirebaseAuthInvalidUserException || 
@@ -192,7 +200,7 @@ public class SignInActivity extends AppCompatActivity {
 
         firebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     Toast.makeText(SignInActivity.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
 
                     // Save user details to Firebase Database
@@ -208,7 +216,7 @@ public class SignInActivity extends AppCompatActivity {
                     navigateToDashboardOrSetup();
                 })
                 .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     Log.e(TAG, "Registration failed: " + e.getMessage());
                     Toast.makeText(SignInActivity.this, "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
@@ -227,9 +235,7 @@ public class SignInActivity extends AppCompatActivity {
 
             @Override
             public void onVerificationFailed(@NonNull FirebaseException e) {
-                if (progressDialog.isShowing()) {
-                    progressDialog.dismiss();
-                }
+                safeDismissProgressDialog();
                 Log.e("OTP_ERROR", "Firebase SMS delivery notice", e);
                 // Non-blocking toast - instant in-app OTP code is already provided on-screen
                 Toast.makeText(SignInActivity.this, "Carrier SMS busy. Tap Auto-Fill to use instant verification OTP!", Toast.LENGTH_LONG).show();
@@ -242,9 +248,7 @@ public class SignInActivity extends AppCompatActivity {
                 Log.d(TAG, "onCodeSent: " + verificationId);
                 mVerificationId = verificationId;
                 forceResendingToken = token;
-                if (progressDialog.isShowing()) {
-                    progressDialog.dismiss();
-                }
+                safeDismissProgressDialog();
             }
         };
 
@@ -372,7 +376,7 @@ public class SignInActivity extends AppCompatActivity {
 
         firebaseAuth.signInWithEmailAndPassword(phoneEmail, securePassword)
                 .addOnSuccessListener(authResult -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     saveUserSession("+91" + cleanPhone, "Customer");
                     Toast.makeText(SignInActivity.this, "Verified as +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
                     navigateToDashboardOrSetup();
@@ -381,13 +385,13 @@ public class SignInActivity extends AppCompatActivity {
                     // Create account if first time logging in with this phone number
                     firebaseAuth.createUserWithEmailAndPassword(phoneEmail, securePassword)
                             .addOnSuccessListener(authResult -> {
-                                progressDialog.dismiss();
+                                safeDismissProgressDialog();
                                 saveUserSession("+91" + cleanPhone, "Customer");
                                 Toast.makeText(SignInActivity.this, "Verified as +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
                                 navigateToDashboardOrSetup();
                             })
                             .addOnFailureListener(createErr -> {
-                                progressDialog.dismiss();
+                                safeDismissProgressDialog();
                                 Log.e(TAG, "Phone fallback error: " + createErr.getMessage());
                                 Toast.makeText(SignInActivity.this, "Login error: " + createErr.getMessage(), Toast.LENGTH_LONG).show();
                             });
@@ -417,7 +421,7 @@ public class SignInActivity extends AppCompatActivity {
 
         firebaseAuth.signInWithCredential(credential)
                 .addOnSuccessListener(authResult -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     String phone = firebaseAuth.getCurrentUser() != null ?
                             firebaseAuth.getCurrentUser().getPhoneNumber() : "";
                     Toast.makeText(SignInActivity.this, "Signed In as " + phone, Toast.LENGTH_SHORT).show();
@@ -425,7 +429,7 @@ public class SignInActivity extends AppCompatActivity {
                     navigateToDashboardOrSetup();
                 })
                 .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
+                    safeDismissProgressDialog();
                     Log.e("OTP_ERROR", "Sign In Failed", e);
                     // If Firebase credential failed, try phone fallback
                     authenticateWithPhoneFallback(currentTargetPhone);
@@ -444,5 +448,11 @@ public class SignInActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        safeDismissProgressDialog();
+        super.onDestroy();
     }
 }

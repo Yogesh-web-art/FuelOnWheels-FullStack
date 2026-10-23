@@ -61,6 +61,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class HomeFragment extends Fragment {
@@ -68,12 +69,8 @@ public class HomeFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final String MY_PREFS_NAME = "UserData";
-
-    private FOWViewModel viewModel;
-
     private static final String TAG = "HomeFragment";
-    private final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
-    private MapView map = null;
+    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 1;
 
     // High-Resolution OpenStreetMap Humanitarian (HOT) Tile Source (Fast global CDN, sharp road labels, rich vibrant cartography, zero watermarks)
     public static final XYTileSource OSM_HOT = new XYTileSource(
@@ -86,17 +83,22 @@ public class HomeFragment extends Fragment {
             "© OpenStreetMap contributors, Humanitarian OpenStreetMap Team"
     );
 
+    private FOWViewModel viewModel;
+    private MapView map = null;
     private boolean isHotLayer = true;
-    private Context ctx;
     private IMapController mapController;
     private LocationManager locationManager;
     private TextView tvCurrentAddress;
     private View fabRecenter;
     private GeoPoint currentUserGeoPoint;
+    private GeoPoint lastGeocodedPoint;
     private boolean hasCenteredMap = false;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback fusedLocationCallback;
     private Polygon accuracyCircle = null;
+
+    // Reusable single thread executor for geocoding to prevent thread leaks
+    private final ExecutorService geoExecutor = Executors.newSingleThreadExecutor();
 
     public HomeFragment() {
         // Required empty public constructor
@@ -115,24 +117,27 @@ public class HomeFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
-        ctx = getContext();
-        
-        // Performance optimizations for fast multi-threaded tile streaming and disk caching
-        IConfigurationProvider config = Configuration.getInstance();
-        config.load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
-        config.setTileDownloadThreads((short) 5);
-        config.setCacheMapTileCount((short) 32);
-        config.setCacheMapTileOvershoot((short) 16);
-        config.setTileFileSystemCacheMaxBytes(250L * 1024 * 1024);
-        config.setTileFileSystemCacheTrimBytes(200L * 1024 * 1024);
 
-        viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
-        locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+        Context ctx = getContext();
+        if (ctx != null) {
+            IConfigurationProvider config = Configuration.getInstance();
+            config.load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+            config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+            config.setTileDownloadThreads((short) 5);
+            config.setCacheMapTileCount((short) 48);
+            config.setCacheMapTileOvershoot((short) 24);
+            config.setTileFileSystemCacheMaxBytes(300L * 1024 * 1024);
+            config.setTileFileSystemCacheTrimBytes(240L * 1024 * 1024);
+        }
+
+        if (getActivity() != null) {
+            viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
+            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         configureMap(view);
@@ -143,8 +148,10 @@ public class HomeFragment extends Fragment {
         if (fabRecenter != null) {
             fabRecenter.setOnClickListener(v -> {
                 if (currentUserGeoPoint != null && mapController != null) {
-                    mapController.animateTo(currentUserGeoPoint, 17.5, 600L);
-                    Toast.makeText(requireContext(), "Centered on your GPS location", Toast.LENGTH_SHORT).show();
+                    mapController.animateTo(currentUserGeoPoint, 17.5, 500L);
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Centered on your GPS location", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
                     configureLocationManager();
                 }
@@ -177,8 +184,7 @@ public class HomeFragment extends Fragment {
 
         requestPermissionsIfNecessary(new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                Manifest.permission.ACCESS_COARSE_LOCATION
         });
 
         configureLocationManager();
@@ -186,81 +192,87 @@ public class HomeFragment extends Fragment {
     }
 
     private void toggleMapLayer() {
-        if (map == null) return;
+        if (map == null || getContext() == null) return;
         isHotLayer = !isHotLayer;
         if (isHotLayer) {
             map.setTileSource(OSM_HOT);
-            Toast.makeText(requireContext(), "Map: Humanitarian High-Detail", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Map: Humanitarian High-Detail", Toast.LENGTH_SHORT).show();
         } else {
             map.setTileSource(TileSourceFactory.MAPNIK);
-            Toast.makeText(requireContext(), "Map: OpenStreetMap Standard", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Map: OpenStreetMap Standard", Toast.LENGTH_SHORT).show();
         }
         map.getTileProvider().clearTileCache();
         map.invalidate();
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Log.d(TAG, "onActivityCreated");
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        viewModel.getRoad().observe(getViewLifecycleOwner(), road -> {
-            Log.d(TAG, "In viewModel.getRoad().observe");
-            if (road != null && map != null) {
-                renderRoadAndStation(road);
-            }
-        });
+        if (viewModel == null && getActivity() != null) {
+            viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
+        }
 
-        viewModel.getDriverCoordinates().observe(getViewLifecycleOwner(), geoPoint -> {
-            if (geoPoint != null && map != null) {
-                Marker driverMarker = null;
-                for (int i = 0; i < map.getOverlays().size(); i++) {
-                    Overlay overlay = map.getOverlays().get(i);
-                    if (overlay instanceof Marker && "driverMarker".equals(((Marker) overlay).getId())) {
-                        driverMarker = (Marker) overlay;
-                        break;
-                    }
+        if (viewModel != null) {
+            viewModel.getRoad().observe(getViewLifecycleOwner(), road -> {
+                if (road != null && map != null) {
+                    renderRoadAndStation(road);
                 }
-                if (driverMarker == null) {
-                    driverMarker = new Marker(map);
-                    driverMarker.setId("driverMarker");
-                    driverMarker.setTitle("Fuel Delivery Partner");
-                    driverMarker.setSnippet("En route with your fuel");
-                    driverMarker.setAnchor(0.5f, 0.5f);
-                    Drawable truckIcon = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_delivery_truck, null);
-                    if (truckIcon != null) {
-                        driverMarker.setIcon(truckIcon);
-                    }
-                    map.getOverlays().add(driverMarker);
-                }
-                driverMarker.setPosition(geoPoint);
-                map.invalidate();
-            }
-        });
+            });
 
-        viewModel.getDelivered().observe(getViewLifecycleOwner(), aBoolean -> {
-            if (aBoolean != null && aBoolean && map != null) {
-                for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
-                    try {
+            viewModel.getDriverCoordinates().observe(getViewLifecycleOwner(), geoPoint -> {
+                if (geoPoint != null && map != null) {
+                    Marker driverMarker = null;
+                    for (int i = 0; i < map.getOverlays().size(); i++) {
                         Overlay overlay = map.getOverlays().get(i);
-                        if (overlay instanceof Polyline &&
-                                ("road".equals(((Polyline) overlay).getId()) || "roadCasing".equals(((Polyline) overlay).getId()))) {
-                            map.getOverlays().remove(i);
-                        } else if (overlay instanceof Marker &&
-                                ("fuelMarker".equals(((Marker) overlay).getId()) || "driverMarker".equals(((Marker) overlay).getId()))) {
-                            map.getOverlays().remove(i);
+                        if (overlay instanceof Marker && "driverMarker".equals(((Marker) overlay).getId())) {
+                            driverMarker = (Marker) overlay;
+                            break;
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+                    if (driverMarker == null) {
+                        driverMarker = new Marker(map);
+                        driverMarker.setId("driverMarker");
+                        driverMarker.setTitle("Fuel Delivery Partner");
+                        driverMarker.setSnippet("En route with your fuel");
+                        driverMarker.setAnchor(0.5f, 0.5f);
+                        if (isAdded()) {
+                            Drawable truckIcon = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_delivery_truck, null);
+                            if (truckIcon != null) {
+                                driverMarker.setIcon(truckIcon);
+                            }
+                        }
+                        map.getOverlays().add(driverMarker);
+                    }
+                    driverMarker.setPosition(geoPoint);
+                    map.invalidate();
                 }
-                map.invalidate();
-            }
-        });
+            });
+
+            viewModel.getDelivered().observe(getViewLifecycleOwner(), aBoolean -> {
+                if (aBoolean != null && aBoolean && map != null) {
+                    for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
+                        try {
+                            Overlay overlay = map.getOverlays().get(i);
+                            if (overlay instanceof Polyline &&
+                                    ("road".equals(((Polyline) overlay).getId()) || "roadCasing".equals(((Polyline) overlay).getId()))) {
+                                map.getOverlays().remove(i);
+                            } else if (overlay instanceof Marker &&
+                                    ("fuelMarker".equals(((Marker) overlay).getId()) || "driverMarker".equals(((Marker) overlay).getId()))) {
+                                map.getOverlays().remove(i);
+                            }
+                        } catch (Exception e) {
+                            Log.w(TAG, "Error removing overlays: " + e.getMessage());
+                        }
+                    }
+                    map.invalidate();
+                }
+            });
+        }
     }
 
     private void renderRoadAndStation(Road road) {
-        if (road == null || map == null) return;
+        if (road == null || map == null || !isAdded()) return;
 
         // Remove existing road / casing / station markers
         for (int i = map.getOverlays().size() - 1; i >= 0; i--) {
@@ -272,13 +284,15 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // 1. Sleek Station Marker
+        // 1. Station Marker
         Drawable stationPin = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_pin_station, null);
         Marker poiMarker = new Marker(map);
         poiMarker.setTitle("Fuel Dispenser Station");
-        poiMarker.setSnippet(viewModel.getFuelLocation());
-        if (viewModel.getFuelCoordinates().getValue() != null) {
-            poiMarker.setPosition(viewModel.getFuelCoordinates().getValue());
+        if (viewModel != null) {
+            poiMarker.setSnippet(viewModel.getFuelLocation());
+            if (viewModel.getFuelCoordinates().getValue() != null) {
+                poiMarker.setPosition(viewModel.getFuelCoordinates().getValue());
+            }
         }
         if (stationPin != null) {
             poiMarker.setIcon(stationPin);
@@ -315,7 +329,9 @@ public class HomeFragment extends Fragment {
         if (road.mBoundingBox != null) {
             map.post(() -> {
                 try {
-                    map.zoomToBoundingBox(road.mBoundingBox, true, 200);
+                    if (map != null) {
+                        map.zoomToBoundingBox(road.mBoundingBox, true, 200);
+                    }
                 } catch (Exception ignored) {}
             });
         }
@@ -338,19 +354,21 @@ public class HomeFragment extends Fragment {
     };
 
     private void configureLocationManager() {
+        if (!isAdded() || getActivity() == null) return;
+
         if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissionsIfNecessary(new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    Manifest.permission.ACCESS_COARSE_LOCATION
             });
             return;
         }
 
-        // 1. Google Play Services Fused Location Provider (high precision, low battery)
+        // 1. Google Play Services Fused Location Provider (high precision, low battery, smooth)
+        boolean fusedSuccess = false;
         try {
-            if (fusedLocationClient == null) {
+            if (fusedLocationClient == null && getActivity() != null) {
                 fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
             }
 
@@ -359,59 +377,68 @@ public class HomeFragment extends Fragment {
                     @Override
                     public void onLocationResult(@NonNull LocationResult locationResult) {
                         if (locationResult == null) return;
-                        for (Location location : locationResult.getLocations()) {
-                            if (location != null) {
-                                updateLocation(location);
-                                break;
-                            }
+                        Location bestLoc = locationResult.getLastLocation();
+                        if (bestLoc != null) {
+                            updateLocation(bestLoc);
                         }
                     }
                 };
             }
 
-            fusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
-                if (location != null) {
-                    updateLocation(location);
-                }
-            });
+            if (fusedLocationClient != null) {
+                fusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
+                    if (location != null) {
+                        updateLocation(location);
+                    }
+                });
 
-            LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000L)
-                    .setMinUpdateIntervalMillis(1500L)
-                    .setMinUpdateDistanceMeters(2.0f)
-                    .build();
+                LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2500L)
+                        .setMinUpdateIntervalMillis(1500L)
+                        .setMinUpdateDistanceMeters(2.0f)
+                        .build();
 
-            fusedLocationClient.requestLocationUpdates(locationRequest, fusedLocationCallback, Looper.getMainLooper());
+                fusedLocationClient.requestLocationUpdates(locationRequest, fusedLocationCallback, Looper.getMainLooper());
+                fusedSuccess = true;
+            }
         } catch (Exception e) {
             Log.e(TAG, "FusedLocationProvider error: " + e.getMessage());
         }
 
-        // 2. Hardware GPS / Network fallback
-        try {
-            Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (lastKnown == null) {
-                lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            }
-            if (lastKnown != null && currentUserGeoPoint == null) {
-                updateLocation(lastKnown);
-            }
+        // 2. Hardware GPS fallback only if FusedLocationClient failed
+        if (!fusedSuccess && locationManager != null) {
+            try {
+                Location lastKnown = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (lastKnown == null) {
+                    lastKnown = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                }
+                if (lastKnown != null && currentUserGeoPoint == null) {
+                    updateLocation(lastKnown);
+                }
 
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 2.0f, locationListener);
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 2.0f, locationListener);
+                } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 2.0f, locationListener);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "LocationManager fallback error: " + e.getMessage());
             }
-            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 2.0f, locationListener);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "LocationManager fallback error: " + e.getMessage());
         }
     }
 
     private void updateLocation(Location loc) {
-        if (loc == null || map == null) return;
-        Log.d(TAG, "updateLocation: lat=" + loc.getLatitude() + ", lon=" + loc.getLongitude());
+        if (loc == null || map == null || !isAdded()) return;
+
+        // Ignore inaccurate fixes (> 80 meters) when we already have an accurate fix
+        if (currentUserGeoPoint != null && loc.hasAccuracy() && loc.getAccuracy() > 80.0f) {
+            return;
+        }
+
         GeoPoint geoPoint = new GeoPoint(loc.getLatitude(), loc.getLongitude());
         currentUserGeoPoint = geoPoint;
-        viewModel.setUserGeoPoint(geoPoint);
+        if (viewModel != null) {
+            viewModel.setUserGeoPoint(geoPoint);
+        }
 
         // Dynamic GPS Accuracy Circle
         if (accuracyCircle == null) {
@@ -458,10 +485,14 @@ public class HomeFragment extends Fragment {
         String fallbackAdd = "Lat: " + String.format(Locale.US, "%.4f", geoPoint.getLatitude()) +
                 ", Lng: " + String.format(Locale.US, "%.4f", geoPoint.getLongitude());
 
-        viewModel.setOrderLocation(fallbackAdd);
-        viewModel.setUserGeoPoint(geoPoint);
+        if (viewModel != null) {
+            if (viewModel.getOrderLocation() == null || viewModel.getOrderLocation().startsWith("Lat:")) {
+                viewModel.setOrderLocation(fallbackAdd);
+            }
+            viewModel.setUserGeoPoint(geoPoint);
+        }
 
-        if (tvCurrentAddress != null) {
+        if (tvCurrentAddress != null && (tvCurrentAddress.getText() == null || tvCurrentAddress.getText().toString().isEmpty() || tvCurrentAddress.getText().toString().startsWith("Lat:"))) {
             tvCurrentAddress.setText(fallbackAdd);
         }
 
@@ -488,8 +519,14 @@ public class HomeFragment extends Fragment {
 
         map.invalidate();
 
-        // Perform Geocoding on background thread to prevent UI freezing/ANR
-        Executors.newSingleThreadExecutor().execute(() -> {
+        // Throttle geocoding: only perform if moved > 30 meters from last geocoded point or on first fix
+        if (lastGeocodedPoint != null && lastGeocodedPoint.distanceToAsDouble(geoPoint) < 30.0) {
+            return;
+        }
+        lastGeocodedPoint = geoPoint;
+
+        // Perform Geocoding on shared background thread pool
+        geoExecutor.execute(() -> {
             try {
                 Context bgContext = getContext();
                 if (bgContext == null) return;
@@ -499,7 +536,9 @@ public class HomeFragment extends Fragment {
                     String fullAdd = addresses.get(0).getAddressLine(0);
                     new Handler(Looper.getMainLooper()).post(() -> {
                         if (!isAdded()) return;
-                        viewModel.setOrderLocation(fullAdd);
+                        if (viewModel != null) {
+                            viewModel.setOrderLocation(fullAdd);
+                        }
                         if (tvCurrentAddress != null) {
                             tvCurrentAddress.setText(fullAdd);
                         }
@@ -529,7 +568,6 @@ public class HomeFragment extends Fragment {
             if (granted) {
                 configureLocationManager();
             } else {
-                // Graceful fallback to default/saved coordinates without recursive dialog loops
                 try {
                     Context c = getContext();
                     if (c != null) {
@@ -547,6 +585,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void requestPermissionsIfNecessary(String[] permissions) {
+        if (!isAdded() || getActivity() == null) return;
         ArrayList<String> permissionsToRequest = new ArrayList<>();
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(requireActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
@@ -563,18 +602,20 @@ public class HomeFragment extends Fragment {
 
     private void configureMap(View view) {
         map = (MapView) view.findViewById(R.id.map);
-        
+        if (map == null) return;
+
         // 1. High-Detail OSM HOT tiles (Humanitarian OpenStreetMap: fast, clean, zero watermarks)
         map.setTileSource(OSM_HOT);
-        
+        map.setDestroyMode(false);
+
         // 2. High-DPI scaling: scales tiles to the device's native screen density for crisp clarity
         map.setTilesScaledToDpi(true);
         map.setMultiTouchControls(true);
         map.setFlingEnabled(true);
-        
+
         // 3. Hide default clunky zoom buttons
         map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
-        
+
         mapController = map.getController();
 
         // 4. Two-finger rotation gesture
@@ -583,58 +624,69 @@ public class HomeFragment extends Fragment {
         map.getOverlays().add(mRotationGestureOverlay);
 
         // 5. Compass Overlay
-        try {
-            CompassOverlay compassOverlay = new CompassOverlay(ctx, new InternalCompassOrientationProvider(ctx), map);
-            compassOverlay.enableCompass();
-            map.getOverlays().add(compassOverlay);
-        } catch (Exception e) {
-            Log.w(TAG, "Compass init warning: " + e.getMessage());
-        }
+        Context ctx = getContext();
+        if (ctx != null) {
+            try {
+                CompassOverlay compassOverlay = new CompassOverlay(ctx, new InternalCompassOrientationProvider(ctx), map);
+                compassOverlay.enableCompass();
+                map.getOverlays().add(compassOverlay);
+            } catch (Exception e) {
+                Log.w(TAG, "Compass init warning: " + e.getMessage());
+            }
 
-        // 6. Distance Scale Bar Overlay (bottom-left alignment)
-        try {
-            ScaleBarOverlay scaleBar = new ScaleBarOverlay(map);
-            scaleBar.setCentred(false);
-            scaleBar.setAlignRight(false);
-            scaleBar.setAlignBottom(true);
-            scaleBar.setScaleBarOffset(40, 260);
-            map.getOverlays().add(scaleBar);
-        } catch (Exception e) {
-            Log.w(TAG, "ScaleBar init warning: " + e.getMessage());
+            // 6. Distance Scale Bar Overlay (bottom-left alignment)
+            try {
+                ScaleBarOverlay scaleBar = new ScaleBarOverlay(map);
+                scaleBar.setCentred(false);
+                scaleBar.setAlignRight(false);
+                scaleBar.setAlignBottom(true);
+                scaleBar.setScaleBarOffset(40, 260);
+                map.getOverlays().add(scaleBar);
+            } catch (Exception e) {
+                Log.w(TAG, "ScaleBar init warning: " + e.getMessage());
+            }
         }
 
         map.invalidate();
-        Log.d(TAG, "in configureMap()");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume");
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
-        map.onResume();
+        Context ctx = getContext();
+        if (ctx != null) {
+            Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+            Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        }
+        if (map != null) {
+            map.onResume();
+        }
 
-        if (viewModel.getRoad().getValue() != null && viewModel.getDelivered().getValue() != null) {
+        if (viewModel != null && viewModel.getRoad().getValue() != null && viewModel.getDelivered().getValue() != null) {
             if (!viewModel.getDelivered().getValue()) {
-                Log.d(TAG, "onResume: handle home click between order");
                 renderRoadAndStation(viewModel.getRoad().getValue());
             }
         }
 
-        if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            configureLocationManager();
+        if (isAdded() && getActivity() != null) {
+            if (ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                configureLocationManager();
+            }
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause");
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-        Configuration.getInstance().save(ctx, prefs);
-        map.onPause();
+        Context ctx = getContext();
+        if (ctx != null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+            Configuration.getInstance().save(ctx, prefs);
+        }
+        if (map != null) {
+            map.onPause();
+        }
         if (fusedLocationClient != null && fusedLocationCallback != null) {
             fusedLocationClient.removeLocationUpdates(fusedLocationCallback);
         }
@@ -644,8 +696,18 @@ public class HomeFragment extends Fragment {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop");
+    public void onDestroyView() {
+        if (map != null) {
+            map.onDetach();
+            map = null;
+        }
+        accuracyCircle = null;
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
+        geoExecutor.shutdown();
+        super.onDestroy();
     }
 }

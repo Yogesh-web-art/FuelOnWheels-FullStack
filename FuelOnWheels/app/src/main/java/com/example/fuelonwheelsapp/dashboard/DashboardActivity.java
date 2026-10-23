@@ -55,6 +55,15 @@ public class DashboardActivity extends AppCompatActivity {
 
     private DatabaseReference activeOrderRef;
     private ValueEventListener activeOrderListener;
+    private final Handler simulationHandler = new Handler(Looper.getMainLooper());
+
+    private void safeDismissProgressDialog() {
+        try {
+            if (!isFinishing() && !isDestroyed() && progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+        } catch (Exception ignored) {}
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,9 +159,7 @@ public class DashboardActivity extends AppCompatActivity {
                     }
 
                     viewModel.getResponseUsingCallback(getApplicationContext(), userPt, order, response -> {
-                        if (progressDialog != null && progressDialog.isShowing()) {
-                            progressDialog.dismiss();
-                        }
+                        safeDismissProgressDialog();
                         if (response != null && response.exception == null && response.address != null) {
                             fueladdress.setText(response.address);
                             viewModel.setFuelCoordinates(response.fuelCoordinates);
@@ -306,16 +313,14 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void simulateDriverMovementInFirebase(DatabaseReference orderRef, Road road) {
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        handler.postDelayed(() -> {
+        simulationHandler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             orderRef.child("orderStatus").setValue("ACCEPTED");
             orderRef.child("driverName").setValue("Rajesh Kumar");
             orderRef.child("driverPhone").setValue("+91 98765 43210");
         }, 3000);
 
-        handler.postDelayed(() -> {
+        simulationHandler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             orderRef.child("orderStatus").setValue("EN_ROUTE");
 
@@ -330,7 +335,7 @@ public class DashboardActivity extends AppCompatActivity {
                     final GeoPoint point = points.get(Math.min(stepIndex * interval, totalPoints - 1));
                     final int etaRemain = Math.max(1, (int) Math.round((road.mDuration / 60) * (1.0 - (double) stepIndex / steps)));
 
-                    handler.postDelayed(() -> {
+                    simulationHandler.postDelayed(() -> {
                         if (isFinishing() || isDestroyed()) return;
                         orderRef.child("driverLatitude").setValue(point.getLatitude());
                         orderRef.child("driverLongitude").setValue(point.getLongitude());
@@ -338,7 +343,7 @@ public class DashboardActivity extends AppCompatActivity {
                     }, (long) (i + 1) * 2500);
                 }
 
-                handler.postDelayed(() -> {
+                simulationHandler.postDelayed(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     GeoPoint lastPoint = points.get(totalPoints - 1);
                     orderRef.child("driverLatitude").setValue(lastPoint.getLatitude());
@@ -347,7 +352,7 @@ public class DashboardActivity extends AppCompatActivity {
                     orderRef.child("etaMinutes").setValue("0");
                 }, (long) (steps + 1) * 2500);
             } else {
-                handler.postDelayed(() -> {
+                simulationHandler.postDelayed(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     orderRef.child("orderStatus").setValue("DELIVERED");
                 }, 15000);
@@ -372,11 +377,12 @@ public class DashboardActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (activeOrderRef != null && activeOrderListener != null) {
-            activeOrderRef.removeEventListener(activeOrderListener);
+            try {
+                activeOrderRef.removeEventListener(activeOrderListener);
+            } catch (Exception ignored) {}
         }
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
+        simulationHandler.removeCallbacksAndMessages(null);
+        safeDismissProgressDialog();
         super.onDestroy();
     }
 }

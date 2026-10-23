@@ -152,7 +152,6 @@ public class FOWRepository {
 
     private void saveOrderData(OrderCallback orderCallback, Order order, Response response) {
         String orderId = order.getOrderId();
-        order.setOrderId(null);
         orderReference.child(orderId).setValue(order)
                 .addOnSuccessListener(unused -> {
                     response.orderSavedToDatabase = true;
