@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,10 +37,17 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class SignInActivity extends AppCompatActivity {
 
@@ -392,37 +400,140 @@ public class SignInActivity extends AppCompatActivity {
         String errorMsg = e != null && e.getMessage() != null ? e.getMessage() : "Cloud SMS service unavailable";
         Log.e(TAG, "handleVerificationFailure: " + errorMsg);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Cloud SMS Notice");
-
+        boolean isBillingError = errorMsg.contains("BILLING_NOT_ENABLED");
         boolean isIntegrityIssue = errorMsg.toLowerCase().contains("app verification") ||
                 errorMsg.toLowerCase().contains("play integrity") ||
                 errorMsg.toLowerCase().contains("recaptcha") ||
                 errorMsg.toLowerCase().contains("safety");
 
-        if (isIntegrityIssue) {
-            builder.setMessage("Google Cloud SMS requires debug SHA-256 fingerprint in Firebase Console (Project: fuelonwheels-f6ce9).\n\n" +
-                    "Fingerprint:\nBA:3E:D9:E5:B6:FF:46:1A:9D:6B:24:21:B2:F0:D5:FE:E0:64:4A:61:74:CD:8F:95:3A:E4:2F:D8:CE:2C:28:72\n\n" +
-                    "Would you like to continue in Developer Test Mode with an instant verification code?");
-            builder.setPositiveButton("Use Test OTP", (dialog, which) -> {
-                int testCode = 100000 + new Random().nextInt(900000);
-                currentGeneratedOtp = String.valueOf(testCode);
-                otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
-                saveOtpSessionToFirebase(currentTargetPhone, currentGeneratedOtp, otpExpiresAtMs);
+        int generatedCode = 100000 + new Random().nextInt(900000);
+        String testOtp = String.valueOf(generatedCode);
 
-                showOtpInputUi(currentTargetPhone);
-                binding.signInEtOtp.setText(currentGeneratedOtp);
-                Toast.makeText(SignInActivity.this, "Test OTP generated: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        if (isBillingError) {
+            builder.setTitle("Google Cloud SMS: Billing Required");
+            builder.setMessage("Google requires Firebase Project (fuelonwheels-f6ce9) to be on the Blaze Plan (Pay-as-you-go) to send real carrier SMS.\n\n" +
+                    "• Blaze Plan includes 10,000 FREE SMS/month.\n" +
+                    "• Alternatively, you can send Real SMS for FREE via Fast2SMS (no credit card required), or enter Test Mode.");
+
+            builder.setPositiveButton("Fast2SMS (Real SMS)", (dialog, which) -> {
+                promptForFast2SmsKey(currentTargetPhone, testOtp);
             });
-            builder.setNegativeButton("Sign in with Email", (dialog, which) -> selectTab(true));
-            builder.setNeutralButton("Cancel", null);
+            builder.setNeutralButton("Use Test OTP", (dialog, which) -> {
+                activateTestOtpMode(currentTargetPhone, testOtp);
+            });
+            builder.setNegativeButton("Email Sign In", (dialog, which) -> selectTab(true));
+        } else if (isIntegrityIssue) {
+            builder.setTitle("Google Cloud SMS: Verification Notice");
+            builder.setMessage("Google Cloud SMS requires debug SHA-256 registered in Firebase Console (Project: fuelonwheels-f6ce9).\n\n" +
+                    "Fingerprint:\nBA:3E:D9:E5:B6:FF:46:1A:9D:6B:24:21:B2:F0:D5:FE:E0:64:4A:61:74:CD:8F:95:3A:E4:2F:D8:CE:2C:28:72\n\n" +
+                    "You can send real SMS via Fast2SMS, enter Test Mode, or use Email sign in.");
+            builder.setPositiveButton("Fast2SMS (Real SMS)", (dialog, which) -> {
+                promptForFast2SmsKey(currentTargetPhone, testOtp);
+            });
+            builder.setNeutralButton("Use Test OTP", (dialog, which) -> {
+                activateTestOtpMode(currentTargetPhone, testOtp);
+            });
+            builder.setNegativeButton("Email Sign In", (dialog, which) -> selectTab(true));
         } else {
-            builder.setMessage("Notice: " + errorMsg + "\n\nYou can use Email sign in or try again later.");
-            builder.setPositiveButton("Sign in with Email", (dialog, which) -> selectTab(true));
-            builder.setNegativeButton("Cancel", null);
+            builder.setTitle("Cloud SMS Notice");
+            builder.setMessage("Google SMS Status: " + errorMsg + "\n\nYou can send real SMS via Fast2SMS, enter Test Mode, or use Email sign in.");
+            builder.setPositiveButton("Fast2SMS (Real SMS)", (dialog, which) -> {
+                promptForFast2SmsKey(currentTargetPhone, testOtp);
+            });
+            builder.setNeutralButton("Use Test OTP", (dialog, which) -> {
+                activateTestOtpMode(currentTargetPhone, testOtp);
+            });
+            builder.setNegativeButton("Email Sign In", (dialog, which) -> selectTab(true));
         }
 
         builder.show();
+    }
+
+    private void activateTestOtpMode(String cleanPhone, String testOtp) {
+        currentGeneratedOtp = testOtp;
+        otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
+        saveOtpSessionToFirebase(cleanPhone, currentGeneratedOtp, otpExpiresAtMs);
+
+        showOtpInputUi(cleanPhone);
+        binding.signInEtOtp.setText(currentGeneratedOtp);
+        Toast.makeText(SignInActivity.this, "Test OTP: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
+    }
+
+    private void promptForFast2SmsKey(String cleanPhone, String otp) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Fast2SMS Cloud Gateway");
+        builder.setMessage("Send real carrier SMS to +91 " + cleanPhone + " without Google Billing.\n\n" +
+                "Enter your free API Key from fast2sms.com (Dev API):");
+
+        final EditText input = new EditText(this);
+        input.setHint("Paste Fast2SMS API Key here");
+        SharedPreferences prefs = getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE);
+        input.setText(prefs.getString("fast2sms_api_key", ""));
+        builder.setView(input);
+
+        builder.setPositiveButton("Send Real SMS", (dialog, which) -> {
+            String key = input.getText().toString().trim();
+            if (!TextUtils.isEmpty(key)) {
+                prefs.edit().putString("fast2sms_api_key", key).apply();
+                dispatchViaFast2Sms(cleanPhone, otp, key);
+            } else {
+                Toast.makeText(this, "API Key is required to send real SMS", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void dispatchViaFast2Sms(String cleanPhone, String otp, String apiKey) {
+        progressDialog.setMessage("Dispatching Real SMS to +91 " + cleanPhone + "...");
+        progressDialog.show();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .build();
+
+        String url = "https://www.fast2sms.com/dev/bulkV2?authorization=" + apiKey +
+                "&route=otp&variables_values=" + otp +
+                "&numbers=" + cleanPhone;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(() -> {
+                    safeDismissProgressDialog();
+                    Toast.makeText(SignInActivity.this, "SMS dispatch error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String body = response.body() != null ? response.body().string() : "";
+                runOnUiThread(() -> {
+                    safeDismissProgressDialog();
+                    if (response.isSuccessful() && (body.contains("\"return\":true") || body.contains("SMS sent") || body.contains("success"))) {
+                        currentGeneratedOtp = otp;
+                        otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
+                        saveOtpSessionToFirebase(cleanPhone, otp, otpExpiresAtMs);
+                        showOtpInputUi(cleanPhone);
+                        Toast.makeText(SignInActivity.this, "Real SMS sent to +91 " + cleanPhone + "! Check Messages.", Toast.LENGTH_LONG).show();
+                    } else {
+                        new AlertDialog.Builder(SignInActivity.this)
+                                .setTitle("Fast2SMS Notice")
+                                .setMessage("Gateway response: " + body + "\n\nPlease check your Fast2SMS API Key or account balance.")
+                                .setPositiveButton("OK", null)
+                                .show();
+                    }
+                });
+            }
+        });
     }
 
     private void startResendTimer() {
