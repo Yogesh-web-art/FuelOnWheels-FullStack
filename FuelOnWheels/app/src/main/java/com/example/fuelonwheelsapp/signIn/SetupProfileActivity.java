@@ -70,8 +70,11 @@ public class SetupProfileActivity extends AppCompatActivity {
             safeDismissProgressDialog();
             if (user != null && user.getFullName() != null
                     && user.getFullName().length() > 0
+                    && !user.getFullName().equalsIgnoreCase("Customer")
                     && user.getEmail() != null
                     && user.getEmail().length() > 0
+                    && !user.getEmail().contains("@fuelonwheels.app")
+                    && !user.getEmail().contains("@fow.")
                     && user.getPhoneNo() != null
                     && user.getPhoneNo().length() > 0) {
                 fullNameOfUser = user.getFullName();

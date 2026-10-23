@@ -345,43 +345,41 @@
                         android:orientation="vertical"
                         android:visibility="gone">
 
-                        <!-- Verification Code Notice & Quick Fill -->
+                        <!-- SMS Sent Banner with Change Phone option -->
                         <LinearLayout
-                            android:id="@+id/layout_otp_hint"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="14dp"
-                            android:background="@drawable/card_elevated_rounded"
+                            android:background="@drawable/badge_pill_blue"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="14dp"
+                            android:paddingStart="12dp"
                             android:paddingTop="8dp"
-                            android:paddingEnd="8dp"
+                            android:paddingEnd="12dp"
                             android:paddingBottom="8dp">
 
                             <TextView
-                                android:id="@+id/tv_otp_display"
+                                android:id="@+id/tv_otp_sent_to"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Verification Code: 123456"
+                                android:text="SMS sent to +91 ••••• •••••"
                                 android:textColor="@color/brand_navy"
-                                android:textSize="13sp"
+                                android:textSize="12sp"
                                 android:textStyle="bold" />
 
-                            <Button
-                                android:id="@+id/btn_auto_fill_otp"
+                            <TextView
+                                android:id="@+id/tv_edit_phone"
                                 android:layout_width="wrap_content"
-                                android:layout_height="32dp"
-                                android:background="?android:attr/selectableItemBackground"
-                                app:backgroundTint="@null"
-                                android:minHeight="0dp"
-                                android:minWidth="0dp"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
-                                android:stateListAnimator="@null"
-                                android:text="Fill Code"
-                                android:textAllCaps="false"
+                                android:layout_height="wrap_content"
+                                android:background="?android:attr/selectableItemBackgroundBorderless"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:paddingStart="8dp"
+                                android:paddingTop="2dp"
+                                android:paddingEnd="8dp"
+                                android:paddingBottom="2dp"
+                                android:text="Change"
                                 android:textColor="@color/brand_primary"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -390,7 +388,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="52dp"
-                            android:layout_marginBottom="12dp"
+                            android:layout_marginBottom="6dp"
                             android:background="@drawable/input_field_bg"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
@@ -403,15 +401,24 @@
                                 android:layout_height="match_parent"
                                 android:background="@android:color/transparent"
                                 android:gravity="center"
-                                android:hint="Enter 6-digit code"
+                                android:hint="Enter 6-digit OTP"
                                 android:inputType="number"
-                                android:letterSpacing="0.15"
+                                android:letterSpacing="0.2"
                                 android:maxLength="6"
                                 android:textColor="@color/brand_navy"
                                 android:textColorHint="@color/text_muted"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginBottom="14dp"
+                            android:text="OTP is valid for 10 minutes. Do not share with anyone."
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
 
                         <Button
                             android:id="@+id/signIn_btn_next"
