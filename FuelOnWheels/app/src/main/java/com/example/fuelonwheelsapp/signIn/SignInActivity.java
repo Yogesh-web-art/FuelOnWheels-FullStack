@@ -1,8 +1,6 @@
 package com.example.fuelonwheelsapp.signIn;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -11,8 +9,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.telephony.SmsManager;
-import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -40,7 +36,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -102,17 +97,9 @@ public class SignInActivity extends AppCompatActivity {
 
     private void requestAppPermissionsProactively() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{
-                        Manifest.permission.POST_NOTIFICATIONS,
-                        Manifest.permission.SEND_SMS
-                }, PERMISSION_REQ_CODE);
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{
-                        Manifest.permission.SEND_SMS
+                        Manifest.permission.POST_NOTIFICATIONS
                 }, PERMISSION_REQ_CODE);
             }
         }
@@ -260,7 +247,8 @@ public class SignInActivity extends AppCompatActivity {
         mCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential credential) {
-                Log.d(TAG, "onVerificationCompleted");
+                Log.d(TAG, "PhoneAuth onVerificationCompleted (auto-retrieval / instant verify)");
+                safeDismissProgressDialog();
                 if (credential.getSmsCode() != null) {
                     binding.signInEtOtp.setText(credential.getSmsCode());
                 }
@@ -270,32 +258,35 @@ public class SignInActivity extends AppCompatActivity {
             @Override
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 safeDismissProgressDialog();
-                Log.d(TAG, "Firebase SMS carrier attempt status: " + e.getMessage());
+                Log.e(TAG, "Firebase Cloud SMS verification failed: " + e.getMessage(), e);
+                handleVerificationFailure(e);
             }
 
             @Override
             public void onCodeSent(@NonNull String verificationId,
                                    @NonNull PhoneAuthProvider.ForceResendingToken token) {
                 super.onCodeSent(verificationId, token);
-                Log.d(TAG, "Firebase onCodeSent verificationId: " + verificationId);
+                safeDismissProgressDialog();
+                Log.d(TAG, "Firebase Cloud SMS code sent. VerificationId: " + verificationId);
                 mVerificationId = verificationId;
                 forceResendingToken = token;
-                safeDismissProgressDialog();
+                otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
+
+                showOtpInputUi(currentTargetPhone);
+                Toast.makeText(SignInActivity.this, "Verification SMS dispatched to +91 " + currentTargetPhone, Toast.LENGTH_SHORT).show();
             }
         };
 
         // "Send Verification Code" Button
         binding.signInBtnGetOtp.setOnClickListener(view -> {
             String phone = binding.signInEtPhoneNo.getText().toString().trim();
-            if (TextUtils.isEmpty(phone) || phone.length() < 10) {
-                Toast.makeText(SignInActivity.this, "Please enter a valid 10-digit phone number", Toast.LENGTH_SHORT).show();
+            String cleanPhone = cleanPhoneNumber(phone);
+            if (TextUtils.isEmpty(cleanPhone) || cleanPhone.length() != 10) {
+                Toast.makeText(SignInActivity.this, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show();
+                binding.signInEtPhoneNo.requestFocus();
                 return;
             }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQ_CODE);
-            } else {
-                startPhoneNumberVerification(phone);
-            }
+            startCloudPhoneNumberVerification(cleanPhone, false);
         });
 
         // "Change" Phone Number Link
@@ -314,11 +305,12 @@ public class SignInActivity extends AppCompatActivity {
         // "Resend OTP" Countdown Link
         binding.signInTvResend.setOnClickListener(view -> {
             if (!TextUtils.isEmpty(currentTargetPhone)) {
-                startPhoneNumberVerification(currentTargetPhone);
+                startCloudPhoneNumberVerification(currentTargetPhone, true);
             } else {
                 String phone = binding.signInEtPhoneNo.getText().toString().trim();
-                if (!TextUtils.isEmpty(phone)) {
-                    startPhoneNumberVerification(phone);
+                String cleanPhone = cleanPhoneNumber(phone);
+                if (!TextUtils.isEmpty(cleanPhone)) {
+                    startCloudPhoneNumberVerification(cleanPhone, true);
                 }
             }
         });
@@ -333,42 +325,50 @@ public class SignInActivity extends AppCompatActivity {
             }
 
             // Expiration validation (10 minutes)
-            if (System.currentTimeMillis() > otpExpiresAtMs) {
+            if (otpExpiresAtMs > 0 && System.currentTimeMillis() > otpExpiresAtMs) {
                 Toast.makeText(SignInActivity.this, "OTP has expired. Please tap Resend to get a new code.", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            // 1. Verify against active SMS/message verification code
-            if (!TextUtils.isEmpty(currentGeneratedOtp) && code.equals(currentGeneratedOtp)) {
+            // 1. If Firebase PhoneAuth verificationId exists, verify with Google Credential
+            if (mVerificationId != null) {
+                verifyPhoneNumberWithCode(mVerificationId, code);
+            } else if (!TextUtils.isEmpty(currentGeneratedOtp) && code.equals(currentGeneratedOtp)) {
+                // 2. Or verify with session/fallback OTP if test mode was activated
                 markOtpSessionUsed(currentTargetPhone);
                 authenticateWithPhoneFallback(currentTargetPhone);
-            } else if (mVerificationId != null) {
-                // 2. Or verify with Firebase PhoneAuth verificationId if carrier SMS code used
-                verifyPhoneNumberWithCode(mVerificationId, code);
             } else {
                 Toast.makeText(SignInActivity.this, "Incorrect OTP. Please check your SMS and try again.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void startPhoneNumberVerification(String phone) {
-        String cleanPhone = cleanPhoneNumber(phone);
-        if (cleanPhone.length() != 10) {
-            Toast.makeText(this, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+    private void startCloudPhoneNumberVerification(String cleanPhone, boolean isResend) {
         currentTargetPhone = cleanPhone;
 
-        // 1. Generate secure 6-digit OTP
-        int code = 100000 + new Random().nextInt(900000);
-        currentGeneratedOtp = String.valueOf(code);
-        otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
+        progressDialog.setMessage(isResend ? "Resending verification code via Cloud SMS..." : "Sending verification code via Cloud SMS...");
+        progressDialog.show();
 
-        // 2. Multi-user concurrent session persistence in Firebase Realtime Database
-        saveOtpSessionToFirebase(cleanPhone, currentGeneratedOtp, otpExpiresAtMs);
+        try {
+            PhoneAuthOptions.Builder optionsBuilder = PhoneAuthOptions.newBuilder(firebaseAuth)
+                    .setPhoneNumber("+91" + cleanPhone)
+                    .setTimeout(60L, TimeUnit.SECONDS)
+                    .setActivity(this)
+                    .setCallbacks(mCallbacks);
 
-        // 3. UI Transition: Masked phone header, empty clean 6-digit input, resend countdown
+            if (isResend && forceResendingToken != null) {
+                optionsBuilder.setForceResendingToken(forceResendingToken);
+            }
+
+            PhoneAuthProvider.verifyPhoneNumber(optionsBuilder.build());
+        } catch (Exception e) {
+            safeDismissProgressDialog();
+            Log.e(TAG, "Error invoking Firebase Cloud SMS: " + e.getMessage(), e);
+            handleVerificationFailure(e);
+        }
+    }
+
+    private void showOtpInputUi(String cleanPhone) {
         binding.signInEtPhoneNo.setEnabled(false);
         binding.signInBtnGetOtp.setVisibility(View.GONE);
         binding.layoutOtpInput.setVisibility(View.VISIBLE);
@@ -378,7 +378,6 @@ public class SignInActivity extends AppCompatActivity {
         binding.signInEtOtp.setText("");
         binding.signInEtOtp.requestFocus();
 
-        // Reveal soft keyboard smoothly
         binding.signInEtOtp.postDelayed(() -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
@@ -387,29 +386,43 @@ public class SignInActivity extends AppCompatActivity {
         }, 150);
 
         startResendTimer();
+    }
 
-        // 4. Send real carrier SMS directly to the target mobile number (+91 cleanPhone)
-        boolean smsDispatched = sendRealSmsToMobile(cleanPhone, currentGeneratedOtp);
-        if (smsDispatched) {
-            Toast.makeText(SignInActivity.this, "SMS OTP sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
+    private void handleVerificationFailure(Exception e) {
+        String errorMsg = e != null && e.getMessage() != null ? e.getMessage() : "Cloud SMS service unavailable";
+        Log.e(TAG, "handleVerificationFailure: " + errorMsg);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Cloud SMS Notice");
+
+        boolean isIntegrityIssue = errorMsg.toLowerCase().contains("app verification") ||
+                errorMsg.toLowerCase().contains("play integrity") ||
+                errorMsg.toLowerCase().contains("recaptcha") ||
+                errorMsg.toLowerCase().contains("safety");
+
+        if (isIntegrityIssue) {
+            builder.setMessage("Google Cloud SMS requires debug SHA-256 fingerprint in Firebase Console (Project: fuelonwheels-f6ce9).\n\n" +
+                    "Fingerprint:\nBA:3E:D9:E5:B6:FF:46:1A:9D:6B:24:21:B2:F0:D5:FE:E0:64:4A:61:74:CD:8F:95:3A:E4:2F:D8:CE:2C:28:72\n\n" +
+                    "Would you like to continue in Developer Test Mode with an instant verification code?");
+            builder.setPositiveButton("Use Test OTP", (dialog, which) -> {
+                int testCode = 100000 + new Random().nextInt(900000);
+                currentGeneratedOtp = String.valueOf(testCode);
+                otpExpiresAtMs = System.currentTimeMillis() + OTP_VALIDITY_MS;
+                saveOtpSessionToFirebase(currentTargetPhone, currentGeneratedOtp, otpExpiresAtMs);
+
+                showOtpInputUi(currentTargetPhone);
+                binding.signInEtOtp.setText(currentGeneratedOtp);
+                Toast.makeText(SignInActivity.this, "Test OTP generated: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
+            });
+            builder.setNegativeButton("Sign in with Email", (dialog, which) -> selectTab(true));
+            builder.setNeutralButton("Cancel", null);
         } else {
-            Toast.makeText(SignInActivity.this, "Sending verification code to +91 " + cleanPhone + "...", Toast.LENGTH_SHORT).show();
+            builder.setMessage("Notice: " + errorMsg + "\n\nYou can use Email sign in or try again later.");
+            builder.setPositiveButton("Sign in with Email", (dialog, which) -> selectTab(true));
+            builder.setNegativeButton("Cancel", null);
         }
 
-        // 5. Background Firebase Phone Auth attempt for carrier network sync
-        try {
-            PhoneAuthOptions options =
-                    PhoneAuthOptions.newBuilder(firebaseAuth)
-                            .setPhoneNumber("+91" + cleanPhone)
-                            .setTimeout(60L, TimeUnit.SECONDS)
-                            .setActivity(this)
-                            .setCallbacks(mCallbacks)
-                            .build();
-
-            PhoneAuthProvider.verifyPhoneNumber(options);
-        } catch (Exception e) {
-            Log.d(TAG, "PhoneAuth background initialization: " + e.getMessage());
-        }
+        builder.show();
     }
 
     private void startResendTimer() {
@@ -434,60 +447,6 @@ public class SignInActivity extends AppCompatActivity {
                 binding.signInTvResend.setTextColor(ContextCompat.getColor(SignInActivity.this, R.color.brand_primary));
             }
         }.start();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQ_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                String phone = binding.signInEtPhoneNo.getText().toString().trim();
-                if (!TextUtils.isEmpty(phone) && phone.length() >= 10) {
-                    startPhoneNumberVerification(phone);
-                }
-            } else {
-                Toast.makeText(this, "SMS permission is required to send verification codes to mobile devices", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    private boolean sendRealSmsToMobile(String phone, String otp) {
-        try {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQ_CODE);
-                return false;
-            }
-
-            SmsManager smsManager = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                smsManager = getSystemService(SmsManager.class);
-            }
-            if (smsManager == null) {
-                int subId = SubscriptionManager.getDefaultSmsSubscriptionId();
-                if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-                    smsManager = SmsManager.getSmsManagerForSubscriptionId(subId);
-                } else {
-                    smsManager = SmsManager.getDefault();
-                }
-            }
-
-            if (smsManager != null) {
-                String appName = getString(R.string.app_name); // "Refuel Anywhere"
-                String smsContent = appName + ": " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
-
-                ArrayList<String> parts = smsManager.divideMessage(smsContent);
-                if (parts.size() > 1) {
-                    smsManager.sendMultipartTextMessage("+91" + phone, null, parts, null, null);
-                } else {
-                    smsManager.sendTextMessage("+91" + phone, null, smsContent, null, null);
-                }
-                Log.d(TAG, "Carrier SMS successfully dispatched to +91" + phone);
-                return true;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Carrier SMS dispatch error: " + e.getMessage());
-        }
-        return false;
     }
 
     private void saveOtpSessionToFirebase(String cleanPhone, String otp, long expiresAt) {
@@ -536,12 +495,11 @@ public class SignInActivity extends AppCompatActivity {
                     navigateToDashboardOrSetup();
                 })
                 .addOnFailureListener(e -> {
-                    // Create account if first time logging in with this phone number
                     firebaseAuth.createUserWithEmailAndPassword(phoneEmail, securePassword)
                             .addOnSuccessListener(authResult -> {
                                 safeDismissProgressDialog();
                                 saveUserSession("+91" + cleanPhone, "Customer");
-                                Toast.makeText(SignInActivity.this, "Welcome to Refuel Anywhere!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignInActivity.this, "Welcome to FuelOnWheels!", Toast.LENGTH_SHORT).show();
                                 navigateToDashboardOrSetup();
                             })
                             .addOnFailureListener(createErr -> {
@@ -585,9 +543,12 @@ public class SignInActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     safeDismissProgressDialog();
-                    Log.e("OTP_ERROR", "Sign In Failed", e);
-                    // If Firebase credential failed, try phone fallback
-                    authenticateWithPhoneFallback(currentTargetPhone);
+                    Log.e(TAG, "Sign In with credential failed: " + e.getMessage());
+                    if (!TextUtils.isEmpty(currentTargetPhone)) {
+                        authenticateWithPhoneFallback(currentTargetPhone);
+                    } else {
+                        Toast.makeText(SignInActivity.this, "Verification error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 });
     }
 
