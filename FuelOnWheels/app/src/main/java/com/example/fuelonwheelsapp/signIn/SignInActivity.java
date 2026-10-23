@@ -387,7 +387,26 @@ public class SignInActivity extends AppCompatActivity {
         postOtpNotification(currentGeneratedOtp);
         dispatchCarrierSms(cleanPhone, currentGeneratedOtp);
 
-        Toast.makeText(SignInActivity.this, "Verification SMS sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
+        // Copy to system clipboard for keyboard suggestion chip (Gboard/Samsung Keyboard)
+        try {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                android.content.ClipData clip = android.content.ClipData.newPlainText("Refuel Anywhere OTP", currentGeneratedOtp);
+                clipboard.setPrimaryClip(clip);
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback guarantee: Show Toast if notifications are not enabled
+        boolean notificationsAllowed = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationsAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        if (notificationsAllowed) {
+            Toast.makeText(SignInActivity.this, "Verification SMS sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(SignInActivity.this, "Refuel Anywhere: Your OTP is " + currentGeneratedOtp + " (Valid for 10 mins)", Toast.LENGTH_LONG).show();
+        }
 
         // 5. Background Firebase Phone Auth attempt for carrier network sync
         try {
