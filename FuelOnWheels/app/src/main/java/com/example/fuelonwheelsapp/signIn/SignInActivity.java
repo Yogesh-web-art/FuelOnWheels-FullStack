@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -22,7 +23,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.fuelonwheelsapp.R;
@@ -40,6 +40,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -288,6 +289,10 @@ public class SignInActivity extends AppCompatActivity {
             String phone = binding.signInEtPhoneNo.getText().toString().trim();
             if (TextUtils.isEmpty(phone) || phone.length() < 10) {
                 Toast.makeText(SignInActivity.this, "Please enter a valid 10-digit phone number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQ_CODE);
             } else {
                 startPhoneNumberVerification(phone);
             }
@@ -383,29 +388,12 @@ public class SignInActivity extends AppCompatActivity {
 
         startResendTimer();
 
-        // 4. Instant SMS & System Notification Dispatch
-        postOtpNotification(currentGeneratedOtp);
-        dispatchCarrierSms(cleanPhone, currentGeneratedOtp);
-
-        // Copy to system clipboard for keyboard suggestion chip (Gboard/Samsung Keyboard)
-        try {
-            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboard != null) {
-                android.content.ClipData clip = android.content.ClipData.newPlainText("Refuel Anywhere OTP", currentGeneratedOtp);
-                clipboard.setPrimaryClip(clip);
-            }
-        } catch (Exception ignored) {}
-
-        // Fallback guarantee: Show Toast if notifications are not enabled
-        boolean notificationsAllowed = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationsAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-        }
-
-        if (notificationsAllowed) {
-            Toast.makeText(SignInActivity.this, "Verification SMS sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
+        // 4. Send real carrier SMS directly to the target mobile number (+91 cleanPhone)
+        boolean smsDispatched = sendRealSmsToMobile(cleanPhone, currentGeneratedOtp);
+        if (smsDispatched) {
+            Toast.makeText(SignInActivity.this, "SMS OTP sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(SignInActivity.this, "Refuel Anywhere: Your OTP is " + currentGeneratedOtp + " (Valid for 10 mins)", Toast.LENGTH_LONG).show();
+            Toast.makeText(SignInActivity.this, "Sending verification code to +91 " + cleanPhone + "...", Toast.LENGTH_SHORT).show();
         }
 
         // 5. Background Firebase Phone Auth attempt for carrier network sync
@@ -448,66 +436,58 @@ public class SignInActivity extends AppCompatActivity {
         }.start();
     }
 
-    private void postOtpNotification(String otp) {
-        try {
-            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (nm == null) return;
-
-            String channelId = "refuel_anywhere_otp_channel";
-            String appName = getString(R.string.app_name); // "Refuel Anywhere"
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel(
-                        channelId,
-                        appName + " Verification Codes",
-                        NotificationManager.IMPORTANCE_HIGH
-                );
-                channel.setDescription("Official security verification codes for " + appName);
-                channel.enableVibration(true);
-                channel.enableLights(true);
-                channel.setVibrationPattern(new long[]{0, 250, 100, 250});
-                nm.createNotificationChannel(channel);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQ_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                String phone = binding.signInEtPhoneNo.getText().toString().trim();
+                if (!TextUtils.isEmpty(phone) && phone.length() >= 10) {
+                    startPhoneNumberVerification(phone);
+                }
+            } else {
+                Toast.makeText(this, "SMS permission is required to send verification codes to mobile devices", Toast.LENGTH_LONG).show();
             }
-
-            String notificationTitle = appName + ": " + otp;
-            String shortMessage = "Your verification code is " + otp + ". Valid for 10 minutes. Do not share with anyone.";
-            String bigMessage = appName + ": Your verification code is " + otp + ". Valid for 10 minutes. Please do not share this OTP with anyone for security purposes.";
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
-                    .setSmallIcon(R.drawable.app_icon)
-                    .setContentTitle(notificationTitle)
-                    .setContentText(shortMessage)
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText(bigMessage))
-                    .setPriority(NotificationCompat.PRIORITY_MAX)
-                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                    .setAutoCancel(true)
-                    .setDefaults(NotificationCompat.DEFAULT_ALL);
-
-            nm.notify(2026, builder.build());
-        } catch (Exception e) {
-            Log.e(TAG, "Notification error: " + e.getMessage());
         }
     }
 
-    private void dispatchCarrierSms(String phone, String otp) {
+    private boolean sendRealSmsToMobile(String phone, String otp) {
         try {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
-                SmsManager smsManager;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    smsManager = getSystemService(SmsManager.class);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQ_CODE);
+                return false;
+            }
+
+            SmsManager smsManager = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                smsManager = getSystemService(SmsManager.class);
+            }
+            if (smsManager == null) {
+                int subId = SubscriptionManager.getDefaultSmsSubscriptionId();
+                if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                    smsManager = SmsManager.getSmsManagerForSubscriptionId(subId);
                 } else {
                     smsManager = SmsManager.getDefault();
                 }
-                if (smsManager != null) {
-                    String appName = getString(R.string.app_name);
-                    String smsContent = appName + ": " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
+            }
+
+            if (smsManager != null) {
+                String appName = getString(R.string.app_name); // "Refuel Anywhere"
+                String smsContent = appName + ": " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
+
+                ArrayList<String> parts = smsManager.divideMessage(smsContent);
+                if (parts.size() > 1) {
+                    smsManager.sendMultipartTextMessage("+91" + phone, null, parts, null, null);
+                } else {
                     smsManager.sendTextMessage("+91" + phone, null, smsContent, null, null);
-                    Log.d(TAG, "Carrier SMS dispatched to +91" + phone);
                 }
+                Log.d(TAG, "Carrier SMS successfully dispatched to +91" + phone);
+                return true;
             }
         } catch (Exception e) {
-            Log.w(TAG, "Carrier SMS dispatch notice: " + e.getMessage());
+            Log.e(TAG, "Carrier SMS dispatch error: " + e.getMessage());
         }
+        return false;
     }
 
     private void saveOtpSessionToFirebase(String cleanPhone, String otp, long expiresAt) {
