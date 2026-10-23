@@ -59,7 +59,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="FuelOnWheels"
+                    android:text="@string/app_name"
                     android:textColor="@color/brand_navy"
                     android:textSize="17sp"
                     android:textStyle="bold" />

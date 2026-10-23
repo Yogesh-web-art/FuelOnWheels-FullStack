@@ -375,6 +375,28 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @androidx.annotation.Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (navHost != null) {
+            for (androidx.fragment.app.Fragment f : navHost.getChildFragmentManager().getFragments()) {
+                f.onActivityResult(requestCode, resultCode, data);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        if (navHost != null) {
+            for (androidx.fragment.app.Fragment f : navHost.getChildFragmentManager().getFragments()) {
+                f.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            }
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         if (activeOrderRef != null && activeOrderListener != null) {
             try {
