@@ -64,6 +64,7 @@ import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -79,30 +80,27 @@ public class HomeFragment extends Fragment {
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 1001;
     private static final int REQUEST_CHECK_SETTINGS = 2001;
 
-    // 1. Google Maps-style Ultra-HD 512px Retina Tile Source (Razor-sharp typography, clean Google Maps palette, no pixelation)
-    public static final XYTileSource CARTO_VOYAGER = new XYTileSource(
-            "CartoVoyagerHD",
-            0, 20, 512, "@2x.png",
+    // 1. High-Contrast OpenStreetMap France (Soft, clean pastels, clear road geometry, 100% free, zero watermarks)
+    public static final XYTileSource OSM_FRANCE = new XYTileSource(
+            "OsmFrance",
+            0, 19, 256, ".png",
             new String[]{
-                    "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
+                    "https://a.tile.openstreetmap.fr/osmfr/",
+                    "https://b.tile.openstreetmap.fr/osmfr/",
+                    "https://c.tile.openstreetmap.fr/osmfr/"
             },
-            "© CARTO, © OpenStreetMap contributors"
+            "© OpenStreetMap contributors"
     );
 
-    // 2. Google Maps-style Clean Minimalist Light HD 512px Retina Tiles
-    public static final XYTileSource CARTO_POSITRON = new XYTileSource(
-            "CartoPositronHD",
-            0, 20, 512, "@2x.png",
+    // 2. High-Detail OpenStreetMap Humanitarian (Clean, detailed, 100% free, zero watermarks)
+    public static final XYTileSource OSM_HOT = new XYTileSource(
+            "OpenStreetMapHOT",
+            0, 19, 256, ".png",
             new String[]{
-                    "https://a.basemaps.cartocdn.com/light_all/",
-                    "https://b.basemaps.cartocdn.com/light_all/",
-                    "https://c.basemaps.cartocdn.com/light_all/",
-                    "https://d.basemaps.cartocdn.com/light_all/"
+                    "https://a.tile.openstreetmap.fr/hot/",
+                    "https://b.tile.openstreetmap.fr/hot/"
             },
-            "© CARTO, © OpenStreetMap contributors"
+            "© OpenStreetMap contributors, Humanitarian OpenStreetMap Team"
     );
 
     private FOWViewModel viewModel;
@@ -151,12 +149,42 @@ public class HomeFragment extends Fragment {
             config.setCacheMapTileOvershoot((short) 32);
             config.setTileFileSystemCacheMaxBytes(350L * 1024 * 1024);
             config.setTileFileSystemCacheTrimBytes(280L * 1024 * 1024);
+            purgeOldWatermarkCache(ctx);
         }
 
         if (getActivity() != null) {
             viewModel = new ViewModelProvider(requireActivity()).get(FOWViewModel.class);
             locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         }
+    }
+
+    private void purgeOldWatermarkCache(Context ctx) {
+        if (ctx == null) return;
+        try {
+            File cacheDir = Configuration.getInstance().getOsmdroidTileCache();
+            if (cacheDir != null && cacheDir.exists()) {
+                File[] children = cacheDir.listFiles();
+                if (children != null) {
+                    for (File f : children) {
+                        if (f.getName().toLowerCase().contains("carto")) {
+                            deleteFolderRecursively(f);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void deleteFolderRecursively(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] files = fileOrDirectory.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    deleteFolderRecursively(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 
     @Override
@@ -177,7 +205,7 @@ public class HomeFragment extends Fragment {
         if (fabRecenter != null) {
             fabRecenter.setOnClickListener(v -> {
                 if (currentUserGeoPoint != null && mapController != null) {
-                    mapController.animateTo(currentUserGeoPoint, 17.0, 500L);
+                    mapController.animateTo(currentUserGeoPoint, 17.5, 500L);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Centered on your GPS location", Toast.LENGTH_SHORT).show();
                     }
@@ -219,19 +247,19 @@ public class HomeFragment extends Fragment {
         currentLayerIndex = (currentLayerIndex + 1) % 3;
         switch (currentLayerIndex) {
             case 0:
-                map.setTileSource(CARTO_VOYAGER);
+                map.setTileSource(TileSourceFactory.MAPNIK);
                 map.setTilesScaledToDpi(false);
-                Toast.makeText(getContext(), "Map: Google Maps Style (Voyager HD)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Map: OpenStreetMap Standard (Crisp & Sharp)", Toast.LENGTH_SHORT).show();
                 break;
             case 1:
-                map.setTileSource(CARTO_POSITRON);
+                map.setTileSource(OSM_FRANCE);
                 map.setTilesScaledToDpi(false);
-                Toast.makeText(getContext(), "Map: Clean Light HD", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Map: High-Contrast Urban (Soft Pastels)", Toast.LENGTH_SHORT).show();
                 break;
             case 2:
-                map.setTileSource(TileSourceFactory.MAPNIK);
-                map.setTilesScaledToDpi(true);
-                Toast.makeText(getContext(), "Map: OpenStreetMap Standard", Toast.LENGTH_SHORT).show();
+                map.setTileSource(OSM_HOT);
+                map.setTilesScaledToDpi(false);
+                Toast.makeText(getContext(), "Map: Humanitarian High-Detail", Toast.LENGTH_SHORT).show();
                 break;
         }
         map.getTileProvider().clearTileCache();
@@ -604,7 +632,7 @@ public class HomeFragment extends Fragment {
 
         if (!hasCenteredMap && mapController != null) {
             hasCenteredMap = true;
-            mapController.setZoom(17.0);
+            mapController.setZoom(17.5);
             mapController.setCenter(geoPoint);
         }
 
@@ -740,16 +768,19 @@ public class HomeFragment extends Fragment {
         map = (MapView) view.findViewById(R.id.map);
         if (map == null) return;
 
-        // 1. Google Maps-style 512px Retina HD CartoDB Voyager tiles (Crisp, high-definition, no blur)
-        map.setTileSource(CARTO_VOYAGER);
+        // Wipe out any old CartoDB watermark files from disk cache
+        purgeOldWatermarkCache(getContext());
+
+        // 1. Official OpenStreetMap Standard (Fast, rock-solid, zero watermarks, no API key needed)
+        map.setTileSource(TileSourceFactory.MAPNIK);
         map.setDestroyMode(false);
 
-        // 2. Disable stretching on 512px retina tiles so text and roads render at 1:1 razor-sharp resolution
+        // 2. Disable DPI stretching so tiles render at native 1:1 razor-sharp resolution (no blur, no pixelation)
         map.setTilesScaledToDpi(false);
         map.setMultiTouchControls(true);
         map.setFlingEnabled(true);
         map.setMinZoomLevel(4.0);
-        map.setMaxZoomLevel(20.0);
+        map.setMaxZoomLevel(19.0);
 
         // 3. Hide default clunky zoom buttons
         map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
