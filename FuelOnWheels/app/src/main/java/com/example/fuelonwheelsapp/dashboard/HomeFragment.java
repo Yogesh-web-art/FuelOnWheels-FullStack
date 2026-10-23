@@ -80,19 +80,51 @@ public class HomeFragment extends Fragment {
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 1001;
     private static final int REQUEST_CHECK_SETTINGS = 2001;
 
-    // 1. High-Contrast OpenStreetMap France (Soft, clean pastels, clear road geometry, 100% free, zero watermarks)
-    public static final XYTileSource OSM_FRANCE = new XYTileSource(
-            "OsmFrance",
-            0, 19, 256, ".png",
-            new String[]{
-                    "https://a.tile.openstreetmap.fr/osmfr/",
-                    "https://b.tile.openstreetmap.fr/osmfr/",
-                    "https://c.tile.openstreetmap.fr/osmfr/"
-            },
-            "© OpenStreetMap contributors"
-    );
+    // 1. Google Maps Roadmap Tile Source (Crystal-clear Google Maps cartography, zero watermarks, zero 403 blocks)
+    public static final org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase GOOGLE_ROADMAP =
+            new org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase(
+                    "GoogleRoadmap",
+                    0, 20, 256, ".png",
+                    new String[]{
+                            "https://mt0.google.com/vt/lyrs=m&hl=en",
+                            "https://mt1.google.com/vt/lyrs=m&hl=en",
+                            "https://mt2.google.com/vt/lyrs=m&hl=en",
+                            "https://mt3.google.com/vt/lyrs=m&hl=en"
+                    },
+                    "© Google"
+            ) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() +
+                            "&x=" + org.osmdroid.util.MapTileIndex.getX(pMapTileIndex) +
+                            "&y=" + org.osmdroid.util.MapTileIndex.getY(pMapTileIndex) +
+                            "&z=" + org.osmdroid.util.MapTileIndex.getZoom(pMapTileIndex);
+                }
+            };
 
-    // 2. High-Detail OpenStreetMap Humanitarian (Clean, detailed, 100% free, zero watermarks)
+    // 2. Google Maps Hybrid Satellite Tile Source (Crisp satellite imagery with labeled streets)
+    public static final org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase GOOGLE_HYBRID =
+            new org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase(
+                    "GoogleHybrid",
+                    0, 20, 256, ".png",
+                    new String[]{
+                            "https://mt0.google.com/vt/lyrs=y&hl=en",
+                            "https://mt1.google.com/vt/lyrs=y&hl=en",
+                            "https://mt2.google.com/vt/lyrs=y&hl=en",
+                            "https://mt3.google.com/vt/lyrs=y&hl=en"
+                    },
+                    "© Google"
+            ) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() +
+                            "&x=" + org.osmdroid.util.MapTileIndex.getX(pMapTileIndex) +
+                            "&y=" + org.osmdroid.util.MapTileIndex.getY(pMapTileIndex) +
+                            "&z=" + org.osmdroid.util.MapTileIndex.getZoom(pMapTileIndex);
+                }
+            };
+
+    // 3. High-Detail OpenStreetMap Humanitarian (Global CDN, 100% free, zero watermarks)
     public static final XYTileSource OSM_HOT = new XYTileSource(
             "OpenStreetMapHOT",
             0, 19, 256, ".png",
@@ -166,7 +198,8 @@ public class HomeFragment extends Fragment {
                 File[] children = cacheDir.listFiles();
                 if (children != null) {
                     for (File f : children) {
-                        if (f.getName().toLowerCase().contains("carto")) {
+                        String name = f.getName().toLowerCase();
+                        if (name.contains("carto") || name.contains("mapnik")) {
                             deleteFolderRecursively(f);
                         }
                     }
@@ -247,19 +280,19 @@ public class HomeFragment extends Fragment {
         currentLayerIndex = (currentLayerIndex + 1) % 3;
         switch (currentLayerIndex) {
             case 0:
-                map.setTileSource(TileSourceFactory.MAPNIK);
+                map.setTileSource(GOOGLE_ROADMAP);
                 map.setTilesScaledToDpi(false);
-                Toast.makeText(getContext(), "Map: OpenStreetMap Standard (Crisp & Sharp)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Map: Google Maps Roadmap", Toast.LENGTH_SHORT).show();
                 break;
             case 1:
-                map.setTileSource(OSM_FRANCE);
+                map.setTileSource(GOOGLE_HYBRID);
                 map.setTilesScaledToDpi(false);
-                Toast.makeText(getContext(), "Map: High-Contrast Urban (Soft Pastels)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Map: Google Maps Satellite / Hybrid", Toast.LENGTH_SHORT).show();
                 break;
             case 2:
                 map.setTileSource(OSM_HOT);
                 map.setTilesScaledToDpi(false);
-                Toast.makeText(getContext(), "Map: Humanitarian High-Detail", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Map: OpenStreetMap Humanitarian", Toast.LENGTH_SHORT).show();
                 break;
         }
         map.getTileProvider().clearTileCache();
@@ -768,19 +801,19 @@ public class HomeFragment extends Fragment {
         map = (MapView) view.findViewById(R.id.map);
         if (map == null) return;
 
-        // Wipe out any old CartoDB watermark files from disk cache
+        // Wipe out any old CartoDB watermark files and 403 blocked Mapnik files from disk cache
         purgeOldWatermarkCache(getContext());
 
-        // 1. Official OpenStreetMap Standard (Fast, rock-solid, zero watermarks, no API key needed)
-        map.setTileSource(TileSourceFactory.MAPNIK);
+        // 1. Crystal-Clear Google Maps Roadmap Tiles (Direct, fast, zero watermarks, zero 403 blocks)
+        map.setTileSource(GOOGLE_ROADMAP);
         map.setDestroyMode(false);
 
-        // 2. Disable DPI stretching so tiles render at native 1:1 razor-sharp resolution (no blur, no pixelation)
+        // 2. Crisp 1:1 pixel rendering - zero stretching, zero blurriness
         map.setTilesScaledToDpi(false);
         map.setMultiTouchControls(true);
         map.setFlingEnabled(true);
         map.setMinZoomLevel(4.0);
-        map.setMaxZoomLevel(19.0);
+        map.setMaxZoomLevel(20.0);
 
         // 3. Hide default clunky zoom buttons
         map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
