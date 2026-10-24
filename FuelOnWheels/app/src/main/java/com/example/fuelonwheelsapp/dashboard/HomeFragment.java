@@ -45,6 +45,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.location.SettingsClient;
 
+import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
@@ -52,6 +53,7 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.config.IConfigurationProvider;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
@@ -146,6 +148,8 @@ public class HomeFragment extends Fragment {
     private GeoPoint currentUserGeoPoint;
     private GeoPoint lastGeocodedPoint;
     private boolean hasCenteredMap = false;
+    private static GeoPoint sLastKnownGeoPoint = null;
+    private static double sLastKnownZoom = 17.5;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback fusedLocationCallback;
     private Polygon accuracyCircle = null;
@@ -295,6 +299,10 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(getContext(), "Map: OpenStreetMap Humanitarian", Toast.LENGTH_SHORT).show();
                 break;
         }
+        map.setHorizontalMapRepetitionEnabled(false);
+        map.setVerticalMapRepetitionEnabled(false);
+        map.setMinZoomLevel(12.0);
+        map.setMaxZoomLevel(20.0);
         map.getTileProvider().clearTileCache();
         map.invalidate();
     }
@@ -363,6 +371,9 @@ public class HomeFragment extends Fragment {
                 }
             });
         }
+
+        // Instantly restore user pin and street view without waiting for GPS delay
+        restoreUserLocationOnMap();
 
         // Whenever user comes to map section, actively check & prompt location
         checkAndPromptLocation();
@@ -665,7 +676,8 @@ public class HomeFragment extends Fragment {
 
         if (!hasCenteredMap && mapController != null) {
             hasCenteredMap = true;
-            mapController.setZoom(17.5);
+            double targetZoom = (sLastKnownZoom >= 12.0 && sLastKnownZoom <= 20.0) ? sLastKnownZoom : 17.5;
+            mapController.setZoom(targetZoom);
             mapController.setCenter(geoPoint);
         }
 
@@ -797,6 +809,78 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    private GeoPoint getSavedGeoPoint() {
+        try {
+            Context act = getContext();
+            if (act != null) {
+                SharedPreferences prefs = act.getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE);
+                String latStr = prefs.getString("userLatitude", null);
+                String lonStr = prefs.getString("userLongitude", null);
+                if (latStr != null && lonStr != null) {
+                    return new GeoPoint(Double.parseDouble(latStr), Double.parseDouble(lonStr));
+                }
+            }
+        } catch (Exception ignored) {}
+        return new GeoPoint(17.4403, 78.4466);
+    }
+
+    private void restoreUserLocationOnMap() {
+        if (map == null || !isAdded()) return;
+
+        GeoPoint pt = currentUserGeoPoint;
+        if (pt == null && sLastKnownGeoPoint != null) {
+            pt = sLastKnownGeoPoint;
+        }
+        if (pt == null && viewModel != null && viewModel.getUserGeoPoint() != null) {
+            pt = viewModel.getUserGeoPoint();
+        }
+        if (pt == null) {
+            pt = getSavedGeoPoint();
+        }
+
+        if (pt != null) {
+            currentUserGeoPoint = pt;
+            sLastKnownGeoPoint = pt;
+
+            if (mapController != null) {
+                double targetZoom = (sLastKnownZoom >= 12.0 && sLastKnownZoom <= 20.0) ? sLastKnownZoom : 17.5;
+                mapController.setZoom(targetZoom);
+                mapController.setCenter(pt);
+            }
+
+            Marker userMarker = null;
+            for (int i = 0; i < map.getOverlays().size(); i++) {
+                Overlay overlay = map.getOverlays().get(i);
+                if (overlay instanceof Marker && "userMarker".equals(((Marker) overlay).getId())) {
+                    userMarker = (Marker) overlay;
+                    break;
+                }
+            }
+            if (userMarker == null) {
+                userMarker = new Marker(map);
+                userMarker.setId("userMarker");
+                userMarker.setAnchor(0.5f, 0.90f);
+                Drawable markerIcon = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_map_pin_user, null);
+                if (markerIcon != null) {
+                    userMarker.setIcon(markerIcon);
+                }
+                userMarker.setTitle("My Location");
+                map.getOverlays().add(userMarker);
+            }
+            userMarker.setPosition(pt);
+
+            if (viewModel != null && viewModel.getOrderLocation() != null) {
+                if (tvCurrentAddress != null) {
+                    tvCurrentAddress.setText(viewModel.getOrderLocation());
+                }
+                userMarker.setSnippet(viewModel.getOrderLocation());
+            }
+
+            updateGpsBadge(true, "GPS ACTIVE");
+            map.invalidate();
+        }
+    }
+
     private void configureMap(View view) {
         map = (MapView) view.findViewById(R.id.map);
         if (map == null) return;
@@ -812,7 +896,14 @@ public class HomeFragment extends Fragment {
         map.setTilesScaledToDpi(false);
         map.setMultiTouchControls(true);
         map.setFlingEnabled(true);
-        map.setMinZoomLevel(4.0);
+
+        // Prevent infinite world repetition wallpaper glitch
+        map.setHorizontalMapRepetitionEnabled(false);
+        map.setVerticalMapRepetitionEnabled(false);
+        map.setScrollableAreaLimitDouble(new BoundingBox(85.0, 180.0, -85.0, -180.0));
+
+        // Strict doorstep fuel delivery zoom boundaries: prevents planetary view (3644 km scale)
+        map.setMinZoomLevel(12.0);
         map.setMaxZoomLevel(20.0);
 
         // 3. Hide default clunky zoom buttons
@@ -849,6 +940,26 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        // 7. Instantly restore position and zoom on map creation
+        GeoPoint restorePoint = currentUserGeoPoint;
+        if (restorePoint == null && sLastKnownGeoPoint != null) {
+            restorePoint = sLastKnownGeoPoint;
+        }
+        if (restorePoint == null && viewModel != null && viewModel.getUserGeoPoint() != null) {
+            restorePoint = viewModel.getUserGeoPoint();
+        }
+        if (restorePoint == null) {
+            restorePoint = getSavedGeoPoint();
+        }
+
+        if (restorePoint != null && mapController != null) {
+            currentUserGeoPoint = restorePoint;
+            sLastKnownGeoPoint = restorePoint;
+            double targetZoom = (sLastKnownZoom >= 12.0 && sLastKnownZoom <= 20.0) ? sLastKnownZoom : 17.5;
+            mapController.setZoom(targetZoom);
+            mapController.setCenter(restorePoint);
+        }
+
         map.invalidate();
     }
 
@@ -862,6 +973,7 @@ public class HomeFragment extends Fragment {
         }
         if (map != null) {
             map.onResume();
+            restoreUserLocationOnMap();
         }
 
         if (viewModel != null && viewModel.getRoad().getValue() != null && viewModel.getDelivered().getValue() != null) {
@@ -883,6 +995,11 @@ public class HomeFragment extends Fragment {
             Configuration.getInstance().save(ctx, prefs);
         }
         if (map != null) {
+            sLastKnownZoom = map.getZoomLevelDouble();
+            IGeoPoint c = map.getMapCenter();
+            if (c instanceof GeoPoint) {
+                sLastKnownGeoPoint = (GeoPoint) c;
+            }
             map.onPause();
         }
         if (fusedLocationClient != null && fusedLocationCallback != null) {
@@ -896,10 +1013,16 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         if (map != null) {
+            sLastKnownZoom = map.getZoomLevelDouble();
+            IGeoPoint c = map.getMapCenter();
+            if (c instanceof GeoPoint) {
+                sLastKnownGeoPoint = (GeoPoint) c;
+            }
             map.onDetach();
             map = null;
         }
         accuracyCircle = null;
+        hasCenteredMap = false;
         super.onDestroyView();
     }
 
