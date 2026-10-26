@@ -202,12 +202,12 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
-                        android:layout_marginBottom="18dp"
+                        android:layout_marginBottom="8dp"
                         android:background="@drawable/input_field_bg"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingStart="14dp"
-                        android:paddingEnd="14dp">
+                        android:paddingEnd="12dp">
 
                         <ImageView
                             android:layout_width="20dp"
@@ -219,14 +219,50 @@
 
                         <EditText
                             android:id="@+id/et_password"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="match_parent"
+                            android:layout_weight="1"
                             android:background="@android:color/transparent"
                             android:hint="Password (min 6 characters)"
                             android:inputType="textPassword"
                             android:textColor="@color/brand_navy"
                             android:textColorHint="@color/text_muted"
                             android:textSize="14sp" />
+
+                        <ImageView
+                            android:id="@+id/iv_toggle_password"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Toggle Password"
+                            android:src="@drawable/ic_visibility_off_24"
+                            app:tint="@color/text_muted" />
+                    </LinearLayout>
+
+                    <!-- Forgot Password Link (visible in Sign In mode) -->
+                    <LinearLayout
+                        android:id="@+id/layout_forgot_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="end"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_forgot_password"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingStart="6dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="2dp"
+                            android:paddingBottom="2dp"
+                            android:text="Forgot Password?"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- Submit Button -->

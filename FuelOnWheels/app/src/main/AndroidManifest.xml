@@ -64,7 +64,17 @@
             android:name=".signIn.SignInActivity"
             android:screenOrientation="fullSensor"
             android:windowSoftInputMode="adjustResize|stateHidden"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="fuelonwheels-f6ce9.firebaseapp.com"
+                    android:pathPrefix="/__/auth/action" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".signIn.MyFirebaseMessagingService"

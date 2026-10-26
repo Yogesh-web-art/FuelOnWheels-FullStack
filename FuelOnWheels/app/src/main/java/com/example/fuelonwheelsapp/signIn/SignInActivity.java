@@ -1,20 +1,33 @@
 package com.example.fuelonwheelsapp.signIn;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionManager;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -55,6 +68,7 @@ public class SignInActivity extends AppCompatActivity {
     private static final long OTP_VALIDITY_MS = 10 * 60 * 1000L; // 10 minutes
 
     private CountDownTimer resendTimer = null;
+    private CountDownTimer emailResendTimer = null;
     private boolean isRegisterMode = false;
 
     private static final String TAG = "SignInActivity";
@@ -92,6 +106,16 @@ public class SignInActivity extends AppCompatActivity {
         setupTabs();
         setupEmailAuth();
         setupPhoneAuth();
+
+        // Handle password reset deep link from email (if launched via action link)
+        checkPasswordResetIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        checkPasswordResetIntent(intent);
     }
 
     private void requestAppPermissionsProactively() {
@@ -164,13 +188,35 @@ public class SignInActivity extends AppCompatActivity {
                 binding.layoutFullName.setVisibility(View.VISIBLE);
                 binding.btnEmailSubmit.setText("Create Account");
                 binding.tvToggleAuthMode.setText("Already have an account? Sign In");
+                binding.layoutForgotPassword.setVisibility(View.GONE);
             } else {
                 binding.tvFormTitle.setText("Welcome Back");
                 binding.tvFormSubtitle.setText("Sign in to order fuel directly to your location");
                 binding.layoutFullName.setVisibility(View.GONE);
                 binding.btnEmailSubmit.setText("Sign In");
                 binding.tvToggleAuthMode.setText("Don't have an account? Create One");
+                binding.layoutForgotPassword.setVisibility(View.VISIBLE);
             }
+        });
+
+        // Toggle password visibility
+        final boolean[] mainPassVisible = {false};
+        binding.ivTogglePassword.setOnClickListener(v -> {
+            mainPassVisible[0] = !mainPassVisible[0];
+            if (mainPassVisible[0]) {
+                binding.etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                binding.ivTogglePassword.setImageResource(R.drawable.ic_visibility_24);
+            } else {
+                binding.etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                binding.ivTogglePassword.setImageResource(R.drawable.ic_visibility_off_24);
+            }
+            binding.etPassword.setSelection(binding.etPassword.getText().length());
+        });
+
+        // Forgot password button click
+        binding.tvForgotPassword.setOnClickListener(v -> {
+            String email = binding.etEmail.getText().toString().trim();
+            showForgotPasswordDialog(email, null);
         });
 
         binding.btnEmailSubmit.setOnClickListener(v -> handleEmailSubmit());
@@ -232,7 +278,14 @@ public class SignInActivity extends AppCompatActivity {
                                 .show();
                     } else if (e instanceof FirebaseAuthInvalidCredentialsException ||
                                (e.getMessage() != null && e.getMessage().toLowerCase().contains("password"))) {
-                        Toast.makeText(SignInActivity.this, "Incorrect password. Please verify your credentials.", Toast.LENGTH_LONG).show();
+                        new AlertDialog.Builder(SignInActivity.this)
+                                .setTitle("Incorrect Password")
+                                .setMessage("The password you entered for " + email + " is incorrect.\n\nWould you like to reset your password?")
+                                .setPositiveButton("Reset Password", (dialog, which) -> {
+                                    showForgotPasswordDialog(email, null);
+                                })
+                                .setNegativeButton("Try Again", null)
+                                .show();
                     } else {
                         Toast.makeText(SignInActivity.this, "Sign In Notice: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
@@ -637,12 +690,340 @@ public class SignInActivity extends AppCompatActivity {
         finish();
     }
 
+    private void showForgotPasswordDialog(String prefillEmail, String initialCode) {
+        if (isFinishing() || isDestroyed()) return;
+
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
+        dialog.setContentView(dialogView);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        dialog.setCancelable(true);
+
+        ImageView ivClose = dialogView.findViewById(R.id.iv_close_dialog);
+        View layoutStep1 = dialogView.findViewById(R.id.layout_step_request_code);
+        EditText etForgotEmail = dialogView.findViewById(R.id.et_forgot_email);
+        Button btnSendResetCode = dialogView.findViewById(R.id.btn_send_reset_code);
+
+        View layoutStep2 = dialogView.findViewById(R.id.layout_step_verify_code);
+        TextView tvVerifyNotice = dialogView.findViewById(R.id.tv_verify_notice);
+        EditText etVerifyCode = dialogView.findViewById(R.id.et_verify_code);
+        TextView btnPasteCode = dialogView.findViewById(R.id.btn_paste_code);
+        EditText etNewPassword = dialogView.findViewById(R.id.et_new_password);
+        ImageView ivToggleNewPassword = dialogView.findViewById(R.id.iv_toggle_new_password);
+        EditText etConfirmPassword = dialogView.findViewById(R.id.et_confirm_new_password);
+        ImageView ivToggleConfirmPassword = dialogView.findViewById(R.id.iv_toggle_confirm_password);
+        Button btnUpdatePassword = dialogView.findViewById(R.id.btn_update_password);
+        TextView tvResendCode = dialogView.findViewById(R.id.tv_resend_reset_code);
+        TextView tvChangeEmail = dialogView.findViewById(R.id.tv_change_email);
+
+        final String[] targetResetEmail = new String[1];
+
+        // Pre-fill email
+        if (!TextUtils.isEmpty(prefillEmail)) {
+            etForgotEmail.setText(prefillEmail);
+            targetResetEmail[0] = prefillEmail;
+        } else {
+            String currentMainEmail = binding.etEmail.getText().toString().trim();
+            if (!TextUtils.isEmpty(currentMainEmail)) {
+                etForgotEmail.setText(currentMainEmail);
+                targetResetEmail[0] = currentMainEmail;
+            }
+        }
+
+        // Close action
+        ivClose.setOnClickListener(v -> dialog.dismiss());
+
+        // Password visibility toggles
+        final boolean[] newPassVisible = {false};
+        ivToggleNewPassword.setOnClickListener(v -> togglePasswordVisibility(etNewPassword, ivToggleNewPassword, newPassVisible));
+
+        final boolean[] confirmPassVisible = {false};
+        ivToggleConfirmPassword.setOnClickListener(v -> togglePasswordVisibility(etConfirmPassword, ivToggleConfirmPassword, confirmPassVisible));
+
+        // Paste button action
+        btnPasteCode.setOnClickListener(v -> {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0) {
+                CharSequence clipText = cm.getPrimaryClip().getItemAt(0).getText();
+                if (clipText != null) {
+                    String extracted = extractActionCode(clipText.toString().trim());
+                    etVerifyCode.setText(extracted);
+                    Toast.makeText(SignInActivity.this, "Code pasted from clipboard", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(SignInActivity.this, "Clipboard is empty", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Step 1: Send Reset Code / Link Button
+        btnSendResetCode.setOnClickListener(v -> {
+            String email = etForgotEmail.getText().toString().trim();
+            if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                etForgotEmail.setError("Please enter a valid email address");
+                etForgotEmail.requestFocus();
+                return;
+            }
+
+            targetResetEmail[0] = email;
+            progressDialog.setMessage("Sending verification code to " + email + "...");
+            progressDialog.show();
+
+            firebaseAuth.sendPasswordResetEmail(email)
+                    .addOnSuccessListener(unused -> {
+                        safeDismissProgressDialog();
+                        Toast.makeText(SignInActivity.this, "Verification email sent to " + email, Toast.LENGTH_LONG).show();
+
+                        savePasswordResetAuditLog(email);
+
+                        layoutStep1.setVisibility(View.GONE);
+                        layoutStep2.setVisibility(View.VISIBLE);
+                        tvVerifyNotice.setText("Verification code & link sent to " + email + ".\nCheck your inbox and spam folder.");
+                        etVerifyCode.requestFocus();
+
+                        startEmailResendCountdown(tvResendCode, email);
+                    })
+                    .addOnFailureListener(e -> {
+                        safeDismissProgressDialog();
+                        Log.e(TAG, "Password reset email failed: " + e.getMessage());
+                        if (e instanceof FirebaseAuthInvalidUserException ||
+                                (e.getMessage() != null && e.getMessage().toLowerCase().contains("no user record"))) {
+                            Toast.makeText(SignInActivity.this, "No account found for " + email + ". Please check spelling or register.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(SignInActivity.this, "Unable to send reset email: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+        });
+
+        // Step 2: Resend Code
+        tvResendCode.setOnClickListener(v -> {
+            String email = targetResetEmail[0];
+            if (TextUtils.isEmpty(email)) {
+                email = etForgotEmail.getText().toString().trim();
+            }
+            if (TextUtils.isEmpty(email)) {
+                Toast.makeText(SignInActivity.this, "Please enter your email first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            final String finalEmail = email;
+            progressDialog.setMessage("Resending verification email...");
+            progressDialog.show();
+
+            firebaseAuth.sendPasswordResetEmail(finalEmail)
+                    .addOnSuccessListener(unused -> {
+                        safeDismissProgressDialog();
+                        Toast.makeText(SignInActivity.this, "New verification email sent to " + finalEmail, Toast.LENGTH_SHORT).show();
+                        savePasswordResetAuditLog(finalEmail);
+                        startEmailResendCountdown(tvResendCode, finalEmail);
+                    })
+                    .addOnFailureListener(e -> {
+                        safeDismissProgressDialog();
+                        Toast.makeText(SignInActivity.this, "Resend failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        });
+
+        // Step 2: Change Email link
+        tvChangeEmail.setOnClickListener(v -> {
+            if (emailResendTimer != null) {
+                emailResendTimer.cancel();
+                emailResendTimer = null;
+            }
+            layoutStep2.setVisibility(View.GONE);
+            layoutStep1.setVisibility(View.VISIBLE);
+            etForgotEmail.requestFocus();
+        });
+
+        // Step 2: Verify Code and Reset Password
+        btnUpdatePassword.setOnClickListener(v -> {
+            String rawCode = etVerifyCode.getText().toString().trim();
+            String newPassword = etNewPassword.getText().toString().trim();
+            String confirmPassword = etConfirmPassword.getText().toString().trim();
+
+            if (TextUtils.isEmpty(rawCode)) {
+                etVerifyCode.setError("Please enter or paste the verification code");
+                etVerifyCode.requestFocus();
+                return;
+            }
+            if (TextUtils.isEmpty(newPassword) || newPassword.length() < 6) {
+                etNewPassword.setError("Password must be at least 6 characters");
+                etNewPassword.requestFocus();
+                return;
+            }
+            if (!newPassword.equals(confirmPassword)) {
+                etConfirmPassword.setError("Passwords do not match");
+                etConfirmPassword.requestFocus();
+                return;
+            }
+
+            String actionCode = extractActionCode(rawCode);
+
+            progressDialog.setMessage("Verifying code & updating password...");
+            progressDialog.show();
+
+            firebaseAuth.verifyPasswordResetCode(actionCode)
+                    .addOnSuccessListener(accountEmail -> {
+                        firebaseAuth.confirmPasswordReset(actionCode, newPassword)
+                                .addOnSuccessListener(unused -> {
+                                    safeDismissProgressDialog();
+                                    dialog.dismiss();
+
+                                    new AlertDialog.Builder(SignInActivity.this)
+                                            .setTitle("Password Reset Successful!")
+                                            .setMessage("Your password for " + accountEmail + " has been reset.\n\nYou can now sign in with your new password.")
+                                            .setPositiveButton("Sign In Now", (d, which) -> {
+                                                selectTab(true);
+                                                binding.etEmail.setText(accountEmail);
+                                                binding.etPassword.setText(newPassword);
+                                                handleEmailSubmit();
+                                            })
+                                            .setNegativeButton("Close", (d, which) -> {
+                                                selectTab(true);
+                                                binding.etEmail.setText(accountEmail);
+                                                binding.etPassword.setText(newPassword);
+                                            })
+                                            .setCancelable(false)
+                                            .show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    safeDismissProgressDialog();
+                                    Log.e(TAG, "confirmPasswordReset failed: " + e.getMessage());
+                                    Toast.makeText(SignInActivity.this, "Failed to update password: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        safeDismissProgressDialog();
+                        Log.e(TAG, "verifyPasswordResetCode failed: " + e.getMessage());
+                        Toast.makeText(SignInActivity.this, "Invalid or expired verification code. Please check your email or request a new code.", Toast.LENGTH_LONG).show();
+                    });
+        });
+
+        // If an initialCode was provided (e.g. via deep link)
+        if (!TextUtils.isEmpty(initialCode)) {
+            layoutStep1.setVisibility(View.GONE);
+            layoutStep2.setVisibility(View.VISIBLE);
+            String cleanCode = extractActionCode(initialCode);
+            etVerifyCode.setText(cleanCode);
+
+            progressDialog.setMessage("Validating code from email...");
+            progressDialog.show();
+
+            firebaseAuth.verifyPasswordResetCode(cleanCode)
+                    .addOnSuccessListener(accountEmail -> {
+                        safeDismissProgressDialog();
+                        targetResetEmail[0] = accountEmail;
+                        tvVerifyNotice.setText("Verified code for " + accountEmail + ".\nEnter your new password below.");
+                        etNewPassword.requestFocus();
+                    })
+                    .addOnFailureListener(e -> {
+                        safeDismissProgressDialog();
+                        tvVerifyNotice.setText("Notice: Please ensure your code is valid.");
+                    });
+        }
+
+        dialog.show();
+    }
+
+    private void togglePasswordVisibility(EditText editText, ImageView toggleView, boolean[] state) {
+        state[0] = !state[0];
+        if (state[0]) {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            toggleView.setImageResource(R.drawable.ic_visibility_24);
+        } else {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            toggleView.setImageResource(R.drawable.ic_visibility_off_24);
+        }
+        editText.setSelection(editText.getText().length());
+    }
+
+    private void startEmailResendCountdown(TextView tvResend, String email) {
+        if (emailResendTimer != null) {
+            emailResendTimer.cancel();
+        }
+
+        tvResend.setEnabled(false);
+        tvResend.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+
+        emailResendTimer = new CountDownTimer(30000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                long sec = Math.max(1, millisUntilFinished / 1000);
+                tvResend.setText("Resend email in " + sec + "s");
+            }
+
+            @Override
+            public void onFinish() {
+                tvResend.setEnabled(true);
+                tvResend.setText("Didn't get email? Resend code");
+                tvResend.setTextColor(ContextCompat.getColor(SignInActivity.this, R.color.brand_primary));
+            }
+        }.start();
+    }
+
+    private String extractActionCode(String input) {
+        if (input == null) return "";
+        input = input.trim();
+        if (input.contains("oobCode=")) {
+            try {
+                Uri uri = Uri.parse(input);
+                String code = uri.getQueryParameter("oobCode");
+                if (!TextUtils.isEmpty(code)) {
+                    return code.trim();
+                }
+            } catch (Exception ignored) {}
+
+            int idx = input.indexOf("oobCode=");
+            String sub = input.substring(idx + 8);
+            int amp = sub.indexOf('&');
+            if (amp != -1) {
+                sub = sub.substring(0, amp);
+            }
+            return sub.trim();
+        }
+        return input;
+    }
+
+    private void savePasswordResetAuditLog(String email) {
+        if (TextUtils.isEmpty(email)) return;
+        try {
+            String sanitized = email.replace(".", "_").replace("@", "_at_");
+            DatabaseReference resetRef = FirebaseDatabase.getInstance()
+                    .getReference("passwordResetRequests")
+                    .child(sanitized);
+
+            Map<String, Object> log = new HashMap<>();
+            log.put("email", email);
+            log.put("requestedAt", ServerValue.TIMESTAMP);
+            log.put("status", "EMAIL_DISPATCHED");
+            resetRef.setValue(log);
+        } catch (Exception ignored) {}
+    }
+
+    private void checkPasswordResetIntent(Intent intent) {
+        if (intent == null || intent.getData() == null) return;
+        Uri uri = intent.getData();
+        String mode = uri.getQueryParameter("mode");
+        String oobCode = uri.getQueryParameter("oobCode");
+        if ("resetPassword".equalsIgnoreCase(mode) && !TextUtils.isEmpty(oobCode)) {
+            selectTab(true);
+            showForgotPasswordDialog(null, oobCode);
+        }
+    }
+
     @Override
     protected void onDestroy() {
         safeDismissProgressDialog();
         if (resendTimer != null) {
             resendTimer.cancel();
             resendTimer = null;
+        }
+        if (emailResendTimer != null) {
+            emailResendTimer.cancel();
+            emailResendTimer = null;
         }
         super.onDestroy();
     }
