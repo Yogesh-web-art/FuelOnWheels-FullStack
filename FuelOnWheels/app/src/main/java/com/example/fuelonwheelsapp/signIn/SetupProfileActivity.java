@@ -74,6 +74,7 @@ public class SetupProfileActivity extends AppCompatActivity {
                     && user.getEmail() != null
                     && user.getEmail().length() > 0
                     && !user.getEmail().contains("@fuelonwheels.app")
+                    && !user.getEmail().contains("@refuelanywhere.app")
                     && !user.getEmail().contains("@fow.")
                     && user.getPhoneNo() != null
                     && user.getPhoneNo().length() > 0) {
@@ -180,7 +181,7 @@ public class SetupProfileActivity extends AppCompatActivity {
 
         if (firebaseUser != null && !TextUtils.isEmpty(firebaseUser.getEmail())) {
             String email = firebaseUser.getEmail();
-            if (!email.contains("@fuelonwheels.app") && !email.contains("@fow.")) {
+            if (!email.contains("@fuelonwheels.app") && !email.contains("@refuelanywhere.app") && !email.contains("@fow.")) {
                 binding.setupEtEmail.setText(email);
                 binding.setupEtEmail.setEnabled(false);
             }

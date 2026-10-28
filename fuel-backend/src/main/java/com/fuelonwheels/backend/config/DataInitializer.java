@@ -107,7 +107,7 @@ public class DataInitializer implements CommandLineRunner {
 
             User demoCustomer = new User(
                     "Demo Customer",
-                    "user@fuelonwheels.com",
+                    "user@refuelanywhere.com",
                     "+91 9999988888",
                     passwordEncoder.encode("password123"),
                     Role.ROLE_CUSTOMER
@@ -117,7 +117,7 @@ public class DataInitializer implements CommandLineRunner {
 
             User demoAdmin = new User(
                     "System Admin",
-                    "admin@fuelonwheels.com",
+                    "admin@refuelanywhere.com",
                     "+91 8888877777",
                     passwordEncoder.encode("admin123"),
                     Role.ROLE_ADMIN
@@ -126,7 +126,7 @@ public class DataInitializer implements CommandLineRunner {
             demoAdmin.setVerificationOtp("999999");
 
             userRepository.saveAll(Arrays.asList(demoCustomer, demoAdmin));
-            logger.info("Successfully seeded Demo Customer (user@fuelonwheels.com) and Admin (admin@fuelonwheels.com).");
+            logger.info("Successfully seeded Demo Customer (user@refuelanywhere.com) and Admin (admin@refuelanywhere.com).");
         }
     }
 }

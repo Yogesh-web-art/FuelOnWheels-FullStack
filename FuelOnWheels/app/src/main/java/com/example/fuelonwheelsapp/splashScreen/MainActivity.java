@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Safely initialize AppCheck & OSMDroid
         try {
-            org.osmdroid.config.Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+            org.osmdroid.config.Configuration.getInstance().setUserAgentValue("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
             FirebaseApp.initializeApp(/*context=*/ this);
             FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
             if (BuildConfig.DEBUG) {

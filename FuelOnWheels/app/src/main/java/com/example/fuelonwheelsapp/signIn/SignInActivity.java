@@ -440,7 +440,7 @@ public class SignInActivity extends AppCompatActivity {
             }
 
             if (smsManager != null) {
-                String message = "FuelOnWheels: " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
+                String message = "Refuel Anywhere: " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
                 ArrayList<String> parts = smsManager.divideMessage(message);
                 if (parts.size() > 1) {
                     smsManager.sendMultipartTextMessage("+91" + cleanPhone, null, parts, null, null);
@@ -654,7 +654,7 @@ public class SignInActivity extends AppCompatActivity {
                             .addOnSuccessListener(authResult -> {
                                 safeDismissProgressDialog();
                                 saveUserSession("+91" + cleanPhone, "Customer");
-                                Toast.makeText(SignInActivity.this, "Welcome to FuelOnWheels!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignInActivity.this, "Welcome to Refuel Anywhere!", Toast.LENGTH_SHORT).show();
                                 navigateToDashboardOrSetup();
                             })
                             .addOnFailureListener(createErr -> {

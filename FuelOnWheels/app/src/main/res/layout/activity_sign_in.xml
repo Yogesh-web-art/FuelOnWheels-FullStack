@@ -41,7 +41,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="FuelOnWheels"
+            android:text="Refuel Anywhere"
             android:textColor="@color/brand_navy"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -495,7 +495,7 @@
             android:gravity="center"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:text="By continuing, you agree to FuelOnWheels' Terms of Service and Privacy Policy"
+            android:text="By continuing, you agree to Refuel Anywhere's Terms of Service and Privacy Policy"
             android:textColor="@color/text_muted"
             android:textSize="11sp" />
 

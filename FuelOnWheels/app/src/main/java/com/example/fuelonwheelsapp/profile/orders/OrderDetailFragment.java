@@ -97,7 +97,7 @@ public class OrderDetailFragment extends Fragment {
         orderDetailBinding.orderDetailOrderId.setText(orderId);
 
         // 2. Locations
-        String fuelLocation = (order.getFuelLocation() != null && !order.getFuelLocation().isEmpty()) ? order.getFuelLocation() : "Fuel On Wheels Depot Station";
+        String fuelLocation = (order.getFuelLocation() != null && !order.getFuelLocation().isEmpty()) ? order.getFuelLocation() : "Refuel Anywhere Depot Station";
         orderDetailBinding.orderDetailFuelAddress.setText(fuelLocation);
 
         String userLocation = (order.getUserLocation() != null && !order.getUserLocation().isEmpty()) ? order.getUserLocation() : "Doorstep Delivery Location";
@@ -155,12 +155,12 @@ public class OrderDetailFragment extends Fragment {
         orderDetailBinding.orderDetailSupport.setOnClickListener(v -> {
             try {
                 Intent intent = new Intent(Intent.ACTION_SENDTO);
-                intent.setData(Uri.parse("mailto:support@fuelonwheels.app"));
+                intent.setData(Uri.parse("mailto:support@refuelanywhere.app"));
                 intent.putExtra(Intent.EXTRA_SUBJECT, "Support for Order " + order.getOrderId());
                 startActivity(intent);
             } catch (Exception e) {
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Support email: support@fuelonwheels.app", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Support email: support@refuelanywhere.app", Toast.LENGTH_SHORT).show();
                 }
             }
         });

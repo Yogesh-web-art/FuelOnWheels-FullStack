@@ -179,7 +179,7 @@ public class HomeFragment extends Fragment {
         if (ctx != null) {
             IConfigurationProvider config = Configuration.getInstance();
             config.load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-            config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+            config.setUserAgentValue("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
             config.setTileDownloadThreads((short) 6);
             config.setCacheMapTileCount((short) 64);
             config.setCacheMapTileOvershoot((short) 32);
@@ -969,7 +969,7 @@ public class HomeFragment extends Fragment {
         Context ctx = getContext();
         if (ctx != null) {
             Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-            Configuration.getInstance().setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+            Configuration.getInstance().setUserAgentValue("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
         }
         if (map != null) {
             map.onResume();

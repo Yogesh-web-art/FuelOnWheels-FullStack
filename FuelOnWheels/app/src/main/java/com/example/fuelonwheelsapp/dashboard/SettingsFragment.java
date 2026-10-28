@@ -88,7 +88,7 @@ public class SettingsFragment extends Fragment {
                     intent.setData(Uri.parse("tel:1800123456"));
                     startActivity(intent);
                 } catch (Exception e) {
-                    Toast.makeText(requireContext(), "Helpline: support@fuelonwheels.org", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Helpline: support@refuelanywhere.org", Toast.LENGTH_SHORT).show();
                 }
             });
         }

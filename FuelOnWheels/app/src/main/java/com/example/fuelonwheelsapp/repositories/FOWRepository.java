@@ -73,7 +73,7 @@ public class FOWRepository {
             try {
                 ArrayList<POI> pois = null;
                 try {
-                    NominatimPOIProvider poiProvider = new NominatimPOIProvider("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+                    NominatimPOIProvider poiProvider = new NominatimPOIProvider("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
                     pois = poiProvider.getPOICloseTo(geoPoint, "fuel", 10, 0.05);
                     if (pois == null || pois.isEmpty()) {
                         pois = poiProvider.getPOICloseTo(geoPoint, "petrol", 10, 0.1);
@@ -89,7 +89,7 @@ public class FOWRepository {
                 } else {
                     // Fallback to nearby partner depot (1.5km offset) so orders always succeed
                     fuelCoordinates = new GeoPoint(geoPoint.getLatitude() + 0.012, geoPoint.getLongitude() + 0.010);
-                    fuelLocation = "FuelOnWheels Central Depot & IndianOil Hub";
+                    fuelLocation = "Refuel Anywhere Central Depot & IndianOil Hub";
                 }
                 order.setFuelLocation(fuelLocation);
 
@@ -99,7 +99,7 @@ public class FOWRepository {
 
                 Road road = null;
                 try {
-                    RoadManager roadManager = new OSRMRoadManager(context, "FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+                    RoadManager roadManager = new OSRMRoadManager(context, "RefuelAnywhere/1.0 (support@refuelanywhere.org)");
                     road = roadManager.getRoad(waypoints);
                 } catch (Exception roadErr) {
                     Log.w(TAG, "Road routing exception: " + roadErr.getMessage());

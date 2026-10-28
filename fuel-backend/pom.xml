@@ -12,7 +12,7 @@
     <artifactId>fuel-backend</artifactId>
     <version>1.0.0</version>
     <name>fuel-backend</name>
-    <description>FuelOnWheels Backend Microservice - Spring Boot and MySQL</description>
+    <description>Refuel Anywhere Backend Microservice - Spring Boot and MySQL</description>
 
     <properties>
         <java.version>21</java.version>

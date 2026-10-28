@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="About Fuel On Wheels"
+            android:text="About Refuel Anywhere"
             android:textColor="@color/brand_navy"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -81,7 +81,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="Fuel On Wheels"
+                        android:text="Refuel Anywhere"
                         android:textColor="@color/brand_navy"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -140,7 +140,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:lineSpacingExtra="3dp"
-                        android:text="Fuel On Wheels transforms energy accessibility by delivering high-grade Petrol and Diesel directly to your parked vehicles, logistics fleets, agricultural equipment, and backup generators. Eliminating long gas station queues and dead-mile travel with smart mobile refuelling."
+                        android:text="Refuel Anywhere transforms energy accessibility by delivering high-grade Petrol and Diesel directly to your parked vehicles, logistics fleets, agricultural equipment, and backup generators. Eliminating long gas station queues and dead-mile travel with smart mobile refuelling."
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -297,7 +297,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="© 2026 Fuel On Wheels. All Rights Reserved."
+                android:text="© 2026 Refuel Anywhere. All Rights Reserved."
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 

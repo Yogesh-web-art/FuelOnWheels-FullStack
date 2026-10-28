@@ -70,7 +70,7 @@ public class DashboardActivity extends AppCompatActivity {
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         org.osmdroid.config.IConfigurationProvider config = org.osmdroid.config.Configuration.getInstance();
-        config.setUserAgentValue("FuelOnWheelsApp/1.0 (support@fuelonwheels.org)");
+        config.setUserAgentValue("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
         config.setTileDownloadThreads((short) 5);
         config.setCacheMapTileCount((short) 32);
         config.setCacheMapTileOvershoot((short) 16);
