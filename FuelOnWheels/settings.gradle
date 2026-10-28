@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral() // Warning: this repository is going to shut down soon
     }
 }
-rootProject.name = "FuelOnWheelsApp"
+rootProject.name = "Refuel Anywhere"
 include ':app'

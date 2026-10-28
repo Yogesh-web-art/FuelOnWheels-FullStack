@@ -14,7 +14,7 @@ buildscript {
 }
 
 allprojects {
-    layout.buildDirectory = file("C:/temp/FuelOnWheels_build/${project.name}")
+    layout.buildDirectory = file("C:/temp/RefuelAnywhere_build/${project.name}")
 }
 
 tasks.register('clean', Delete) {
