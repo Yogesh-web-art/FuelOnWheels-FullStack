@@ -374,7 +374,7 @@ public class SignInActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationChannel channel = new NotificationChannel(
                         channelId,
-                        "Refuel Anywhere Verification",
+                        "PocketPitstop Verification",
                         NotificationManager.IMPORTANCE_HIGH
                 );
                 channel.setDescription("OTP Verification Codes");
@@ -385,7 +385,7 @@ public class SignInActivity extends AppCompatActivity {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
                     .setSmallIcon(R.drawable.ic_lock_reset_24)
-                    .setContentTitle("Refuel Anywhere")
+                    .setContentTitle("PocketPitstop")
                     .setContentText(otp + " is your verification OTP")
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone."))
@@ -513,7 +513,7 @@ public class SignInActivity extends AppCompatActivity {
             if (!TextUtils.isEmpty(devicePhone) && !devicePhone.equals(cleanPhone)) {
                 sendSmsViaDeviceSim(devicePhone, currentGeneratedOtp);
             }
-            Toast.makeText(this, "Refuel Anywhere OTP: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "PocketPitstop OTP: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -526,7 +526,7 @@ public class SignInActivity extends AppCompatActivity {
         if (sent) {
             Toast.makeText(this, "OTP SMS sent to +91 " + cleanPhone, Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Refuel Anywhere OTP: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "PocketPitstop OTP: " + currentGeneratedOtp, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -550,7 +550,7 @@ public class SignInActivity extends AppCompatActivity {
             }
 
             if (smsManager != null) {
-                String message = "Refuel Anywhere: " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
+                String message = "PocketPitstop: " + otp + " is your verification OTP. Valid for 10 minutes. Do not share this OTP with anyone.";
                 ArrayList<String> parts = smsManager.divideMessage(message);
                 if (parts.size() > 1) {
                     smsManager.sendMultipartTextMessage("+91" + cleanPhone, null, parts, null, null);
@@ -764,7 +764,7 @@ public class SignInActivity extends AppCompatActivity {
                             .addOnSuccessListener(authResult -> {
                                 safeDismissProgressDialog();
                                 saveUserSession("+91" + cleanPhone, "Yogesh");
-                                Toast.makeText(SignInActivity.this, "Welcome to Refuel Anywhere!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignInActivity.this, "Welcome to PocketPitstop!", Toast.LENGTH_SHORT).show();
                                 navigateToDashboardOrSetup();
                             })
                             .addOnFailureListener(createErr -> {

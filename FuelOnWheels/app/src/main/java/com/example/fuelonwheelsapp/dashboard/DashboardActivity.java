@@ -70,7 +70,7 @@ public class DashboardActivity extends AppCompatActivity {
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         org.osmdroid.config.IConfigurationProvider config = org.osmdroid.config.Configuration.getInstance();
-        config.setUserAgentValue("RefuelAnywhere/1.0 (support@refuelanywhere.org)");
+        config.setUserAgentValue("PocketPitstop/1.0 (support@pocketpitstop.org)");
         config.setTileDownloadThreads((short) 5);
         config.setCacheMapTileCount((short) 32);
         config.setCacheMapTileOvershoot((short) 16);
@@ -114,12 +114,32 @@ public class DashboardActivity extends AppCompatActivity {
                     break;
 
                 case 1:
-                    int petrolQ = viewModel.getPetrolQuantInt() != null ? viewModel.getPetrolQuantInt() : 0;
-                    int dieselQ = viewModel.getDieselQuantInt() != null ? viewModel.getDieselQuantInt() : 0;
-                    if (petrolQ <= 0 && dieselQ <= 0) {
-                        Toast.makeText(this, "Please select at least 1 Litre of fuel to continue", Toast.LENGTH_SHORT).show();
-                        return;
+                    int sTypeCheck = viewModel.getSelectedServiceType();
+                    if (sTypeCheck == FOWViewModel.SERVICE_FUEL) {
+                        int petrolQ = viewModel.getPetrolQuantInt() != null ? viewModel.getPetrolQuantInt() : 0;
+                        int dieselQ = viewModel.getDieselQuantInt() != null ? viewModel.getDieselQuantInt() : 0;
+                        if (petrolQ <= 0 && dieselQ <= 0) {
+                            Toast.makeText(this, "Please select at least 1 Litre of fuel to continue", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    } else if (sTypeCheck == FOWViewModel.SERVICE_EV) {
+                        if (viewModel.getEvPrice() <= 0) {
+                            viewModel.setEvPlanTitle("SOS Emergency Boost (10 kWh)");
+                            viewModel.setEvPrice(249);
+                            viewModel.setEvKwh(10);
+                        }
+                    } else if (sTypeCheck == FOWViewModel.SERVICE_REPAIR) {
+                        if (viewModel.getRepairPrice() <= 0) {
+                            viewModel.setRepairIssueTitle("🛞 Flat Tyre / Puncture Repair");
+                            viewModel.setRepairPrice(199);
+                        }
+                    } else if (sTypeCheck == FOWViewModel.SERVICE_SOS) {
+                        if (viewModel.getSosPrice() <= 0) {
+                            viewModel.setSosTitle("🚨 Biker SOS Fuel (1.5L)");
+                            viewModel.setSosPrice(250);
+                        }
                     }
+
                     getSupportFragmentManager().beginTransaction()
                             .setReorderingAllowed(true)
                             .add(R.id.fragmentContainerView3, PaymentFragment.class, null)
@@ -130,14 +150,39 @@ public class DashboardActivity extends AppCompatActivity {
 
                 case 2:
                     Order order = new Order();
-                    int p = viewModel.getPetrolQuantInt() != null ? viewModel.getPetrolQuantInt() : 0;
-                    int d = viewModel.getDieselQuantInt() != null ? viewModel.getDieselQuantInt() : 0;
-                    order.setnDiesel(String.valueOf(d));
-                    order.setnPetrol(String.valueOf(p));
-                    order.setDeliveryCharge("50");
-                    order.setDieselPrice("94");
-                    order.setPetrolPrice("100");
-                    order.setTotalAmount(String.valueOf((d * 94 + p * 100 + 50)));
+                    int sType = viewModel.getSelectedServiceType();
+                    int totalAmt = 0;
+
+                    if (sType == FOWViewModel.SERVICE_FUEL) {
+                        int p = viewModel.getPetrolQuantInt() != null ? viewModel.getPetrolQuantInt() : 0;
+                        int d = viewModel.getDieselQuantInt() != null ? viewModel.getDieselQuantInt() : 0;
+                        order.setnDiesel(String.valueOf(d));
+                        order.setnPetrol(String.valueOf(p));
+                        order.setDeliveryCharge("50");
+                        order.setDieselPrice("94");
+                        order.setPetrolPrice("100");
+                        totalAmt = (d * 94 + p * 100 + 50);
+                    } else if (sType == FOWViewModel.SERVICE_EV) {
+                        int evPrice = viewModel.getEvPrice() > 0 ? viewModel.getEvPrice() : 249;
+                        order.setnDiesel("0");
+                        order.setnPetrol("0");
+                        order.setDeliveryCharge("50");
+                        totalAmt = evPrice + 50;
+                    } else if (sType == FOWViewModel.SERVICE_REPAIR) {
+                        int rPrice = viewModel.getRepairPrice() > 0 ? viewModel.getRepairPrice() : 199;
+                        order.setnDiesel("0");
+                        order.setnPetrol("0");
+                        order.setDeliveryCharge("50");
+                        totalAmt = rPrice + 50;
+                    } else if (sType == FOWViewModel.SERVICE_SOS) {
+                        int sosPrice = viewModel.getSosPrice() > 0 ? viewModel.getSosPrice() : 250;
+                        order.setnDiesel("0");
+                        order.setnPetrol("0");
+                        order.setDeliveryCharge("0");
+                        totalAmt = sosPrice;
+                    }
+
+                    order.setTotalAmount(String.valueOf(totalAmt));
                     order.setPaymentMethod("COD");
                     order.setUserLocation(viewModel.getOrderLocation() != null ? viewModel.getOrderLocation() : "Current Location");
 
@@ -158,12 +203,29 @@ public class DashboardActivity extends AppCompatActivity {
                         viewModel.setUserGeoPoint(userPt);
                     }
 
+                    final int currentSelectedService = sType;
                     viewModel.getResponseUsingCallback(getApplicationContext(), userPt, order, response -> {
                         safeDismissProgressDialog();
                         if (response != null && response.exception == null && response.address != null) {
-                            fueladdress.setText(response.address);
+                            TextView deliveryHeaderTitle = findViewById(R.id.tv_delivery_header_title);
+                            String partnerLabel = response.address;
+
+                            if (currentSelectedService == FOWViewModel.SERVICE_EV) {
+                                if (deliveryHeaderTitle != null) deliveryHeaderTitle.setText("EV Fast-Charge Van in Progress");
+                                partnerLabel = "PocketPitstop Mobile EV Van #KA-04-E-1088";
+                            } else if (currentSelectedService == FOWViewModel.SERVICE_REPAIR) {
+                                if (deliveryHeaderTitle != null) deliveryHeaderTitle.setText("Mobile Mechanic En Route");
+                                partnerLabel = "Mechanic Suresh (4.9 ★) • TVS Apache";
+                            } else if (currentSelectedService == FOWViewModel.SERVICE_SOS) {
+                                if (deliveryHeaderTitle != null) deliveryHeaderTitle.setText("Community Samaritan En Route");
+                                partnerLabel = "Rider Rahul (Verified Samaritan) • Pulsar 150";
+                            } else {
+                                if (deliveryHeaderTitle != null) deliveryHeaderTitle.setText("Fuel Delivery in Progress");
+                            }
+
+                            fueladdress.setText(partnerLabel);
                             viewModel.setFuelCoordinates(response.fuelCoordinates);
-                            viewModel.setFuelLocation(response.address);
+                            viewModel.setFuelLocation(partnerLabel);
                             viewModel.setRoad(response.road);
                             address.setText(viewModel.getOrderLocation() != null ? viewModel.getOrderLocation() : "Your Location");
                             delivering_to.setText(fullName);
@@ -363,13 +425,13 @@ public class DashboardActivity extends AppCompatActivity {
     public void updateNxtBtn() {
         switch (homeState) {
             case 0:
-                nextButton.setText("Order");
+                nextButton.setText("Select Pitstop Service");
                 break;
             case 1:
-                nextButton.setText("Next");
+                nextButton.setText("Proceed to Payment");
                 break;
             case 2:
-                nextButton.setText("Place Order");
+                nextButton.setText("Confirm & Dispatch");
                 break;
         }
     }

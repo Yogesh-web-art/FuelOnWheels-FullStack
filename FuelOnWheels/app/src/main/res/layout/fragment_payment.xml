@@ -141,6 +141,36 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Dynamic Custom Service Row (EV, Roadside Repair, Community SOS) -->
+            <LinearLayout
+                android:id="@+id/service_custom_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/service_custom_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="On-Demand Service"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/service_custom_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rs. 0.00"
+                    android:textColor="@color/brand_navy"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <!-- Delivery Fee Row -->
             <LinearLayout
                 android:layout_width="match_parent"

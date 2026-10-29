@@ -7,9 +7,9 @@
     android:background="@drawable/bg_order_sheet"
     android:elevation="16dp"
     android:orientation="vertical"
-    android:paddingStart="20dp"
+    android:paddingStart="16dp"
     android:paddingTop="12dp"
-    android:paddingEnd="20dp"
+    android:paddingEnd="16dp"
     android:paddingBottom="16dp"
     tools:context=".dashboard.OrderFragment">
 
@@ -18,7 +18,7 @@
         android:layout_width="44dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="12dp"
         android:background="@drawable/card_elevated_rounded"
         android:backgroundTint="#CBD5E1" />
 
@@ -26,7 +26,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="12dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -37,22 +37,25 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_order_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Select Fuel"
+                android:text="PocketPitstop Services"
                 android:textColor="@color/brand_navy"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_order_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Real-time doorstep fuel dispenser"
+                android:text="Choose your on-demand roadside service"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tv_order_eta_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/badge_pill_blue"
@@ -60,268 +63,1049 @@
             android:paddingTop="4dp"
             android:paddingEnd="10dp"
             android:paddingBottom="4dp"
-            android:text="15-20 mins"
+            android:text="10-15 mins"
             android:textColor="@color/pill_blue_text"
             android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- PETROL CARD -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- HORIZONTAL SERVICE TABS -->
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="@color/surface_card"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:strokeColor="@color/card_border"
-        app:strokeWidth="1dp">
+        android:layout_marginBottom="14dp"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Tab 1: Fuel -->
+            <TextView
+                android:id="@+id/tab_fuel"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tab_selected_bg"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="⛽ Fuel Delivery"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Tab 2: EV Charge -->
+            <TextView
+                android:id="@+id/tab_ev"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tab_unselected_bg"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="⚡ EV Fast-Charge"
+                android:textColor="@color/brand_navy"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Tab 3: Roadside Repair -->
+            <TextView
+                android:id="@+id/tab_repair"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/tab_unselected_bg"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="🔧 Roadside Repair"
+                android:textColor="@color/brand_navy"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Tab 4: Community SOS -->
+            <TextView
+                android:id="@+id/tab_sos"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:background="@drawable/tab_unselected_bg"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="🚨 Community SOS"
+                android:textColor="@color/brand_navy"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- SCROLLABLE SERVICE CONTAINERS -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="380dp"
+        android:overScrollMode="never"
+        android:scrollbars="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
+            android:orientation="vertical">
 
-            <!-- Fuel Icon Badge -->
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/badge_pill_amber"
-                android:padding="10dp"
-                android:contentDescription="Petrol"
-                android:src="@drawable/ic_baseline_local_gas_station_24"
-                app:tint="@color/pill_amber_text" />
-
-            <!-- Title & Price Info -->
+            <!-- ============================================== -->
+            <!-- CONTAINER 1: FUEL DELIVERY (PETROL / DIESEL)   -->
+            <!-- ============================================== -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:id="@+id/container_fuel"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="visible">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- PETROL CARD -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Petrol (Regular)"
-                    android:textColor="@color/brand_navy"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_amber"
+                            android:contentDescription="Petrol"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_baseline_local_gas_station_24"
+                            app:tint="@color/pill_amber_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Petrol (Regular)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 100 / Litre"
+                                android:textColor="@color/pill_amber_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/petrol_minus"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_stepper_action"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                app:backgroundTint="@null" />
+
+                            <TextView
+                                android:id="@+id/petrol_quant"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:minWidth="38dp"
+                                android:paddingStart="4dp"
+                                android:paddingEnd="4dp"
+                                android:text="x1"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <Button
+                                android:id="@+id/petrol_plus"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_stepper_action"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                app:backgroundTint="@null" />
+
+                            <Button
+                                android:id="@+id/petrol_add"
+                                android:layout_width="78dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_add_fuel"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="+ ADD"
+                                android:textAllCaps="false"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:backgroundTint="@null" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- DIESEL CARD -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="₹100 / Litre"
-                    android:textColor="@color/pill_amber_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_green"
+                            android:contentDescription="Diesel"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_baseline_local_gas_station_24"
+                            app:tint="@color/pill_green_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Diesel (Hi-Speed)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 94 / Litre"
+                                android:textColor="@color/pill_green_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/diesel_minus"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_stepper_action"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                app:backgroundTint="@null" />
+
+                            <TextView
+                                android:id="@+id/diesel_quant"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:minWidth="38dp"
+                                android:paddingStart="4dp"
+                                android:paddingEnd="4dp"
+                                android:text="x1"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <Button
+                                android:id="@+id/diesel_plus"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_stepper_action"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                app:backgroundTint="@null" />
+
+                            <Button
+                                android:id="@+id/diesel_add"
+                                android:layout_width="78dp"
+                                android:layout_height="36dp"
+                                android:background="@drawable/btn_add_fuel"
+                                android:gravity="center"
+                                android:minWidth="0dp"
+                                android:minHeight="0dp"
+                                android:padding="0dp"
+                                android:text="+ ADD"
+                                android:textAllCaps="false"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:backgroundTint="@null" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <!-- Petrol Stepper & Add Container -->
+            <!-- ============================================== -->
+            <!-- CONTAINER 2: EV FAST-CHARGE (MOBILE DC BOOST)  -->
+            <!-- ============================================== -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:id="@+id/container_ev"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <Button
-                    android:id="@+id/petrol_minus"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_stepper_action"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="−"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/petrol_quant"
-                    android:layout_width="wrap_content"
+                <!-- Vehicle Selector Pills -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
                     android:gravity="center"
-                    android:minWidth="38dp"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="4dp"
-                    android:text="@string/x1"
-                    android:textColor="@color/brand_navy"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/petrol_plus"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_stepper_action"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="+"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
+                    <TextView
+                        android:id="@+id/btn_ev_car"
+                        android:layout_width="0dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/tab_selected_bg"
+                        android:gravity="center"
+                        android:text="🚗 4-Wheeler (CCS2)"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/petrol_add"
-                    android:layout_width="78dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_add_fuel"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="+ ADD"
-                    android:textAllCaps="false"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/btn_ev_bike"
+                        android:layout_width="0dp"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/tab_unselected_bg"
+                        android:gravity="center"
+                        android:text="🛵 2-Wheeler (16A)"
+                        android:textColor="@color/brand_navy"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- EV Plan 1: SOS Boost -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_ev_boost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_blue"
+                            android:contentDescription="EV Boost"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_ev_station_24"
+                            app:tint="@color/brand_primary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="SOS Emergency Boost (10 kWh)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="15 mins • Adds ~50 km rescue range"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 249"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_ev_boost"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- EV Plan 2: Full Top-Up -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_ev_topup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_green"
+                            android:contentDescription="EV Topup"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_ev_station_24"
+                            app:tint="@color/pill_green_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Full Battery Top-Up (25 kWh)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="High-speed doorstep charge (~150 km)"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 549"
+                                android:textColor="@color/pill_green_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_ev_topup"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
+
+            <!-- ============================================== -->
+            <!-- CONTAINER 3: ROADSIDE REPAIR / MECHANIC        -->
+            <!-- ============================================== -->
+            <LinearLayout
+                android:id="@+id/container_repair"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Service 1: Puncture Repair -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_repair_tyre"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_amber"
+                            android:contentDescription="Tyre"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_build_repair_24"
+                            app:tint="@color/pill_amber_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🛞 Flat Tyre / Puncture"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="On-spot puncture fix or spare swap"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 199"
+                                android:textColor="@color/pill_amber_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_repair_tyre"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Service 2: Battery Jumpstart -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_repair_battery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_blue"
+                            android:contentDescription="Jumpstart"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_lock_reset_24"
+                            app:tint="@color/brand_primary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔋 12V Battery Jumpstart"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="High-power booster revival (5 mins)"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 249"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_repair_battery"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Service 3: Minor Mechanical / Clutch -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_repair_minor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_green"
+                            android:contentDescription="Clutch"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_build_repair_24"
+                            app:tint="@color/pill_green_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🛠️ Minor Mechanical / Clutch"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Cable replacement, fluids, fuse check"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 349"
+                                android:textColor="@color/pill_green_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_repair_minor"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Service 4: Emergency Towing -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_repair_towing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_amber"
+                            android:contentDescription="Towing"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_map_delivery_truck"
+                            app:tint="@color/pill_amber_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚜 Emergency Flatbed Towing"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Safe flatbed tow to nearest garage"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 999"
+                                android:textColor="@color/pill_amber_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_repair_towing"
+                            android:layout_width="78dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ SELECT"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- ============================================== -->
+            <!-- CONTAINER 4: COMMUNITY SOS (GOOD SAMARITAN)    -->
+            <!-- ============================================== -->
+            <LinearLayout
+                android:id="@+id/container_sos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- SOS Option 1: 1.5L Fuel -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_sos_15"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_amber"
+                            android:contentDescription="SOS Fuel"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_sos_emergency_24"
+                            app:tint="@color/pill_amber_text" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚨 Biker SOS Fuel (1.5 Litres)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 100 Fuel + Rs. 150 Samaritan Bounty"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total Rs. 250"
+                                android:textColor="@color/pill_amber_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_sos_15"
+                            android:layout_width="86dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ REQUEST"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- SOS Option 2: 2.5L Fuel -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_sos_25"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/card_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/badge_pill_blue"
+                            android:contentDescription="SOS Fuel"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_sos_emergency_24"
+                            app:tint="@color/brand_primary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚨 Biker SOS Fuel (2.5 Litres)"
+                                android:textColor="@color/brand_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Rs. 160 Fuel + Rs. 190 Samaritan Bounty"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total Rs. 350"
+                                android:textColor="@color/brand_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_select_sos_25"
+                            android:layout_width="86dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/btn_add_fuel"
+                            android:gravity="center"
+                            android:minWidth="0dp"
+                            android:minHeight="0dp"
+                            android:padding="0dp"
+                            android:text="+ REQUEST"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- DIESEL CARD -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="@color/surface_card"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:strokeColor="@color/card_border"
-        app:strokeWidth="1dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <!-- Fuel Icon Badge -->
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/badge_pill_green"
-                android:padding="10dp"
-                android:contentDescription="Diesel"
-                android:src="@drawable/ic_baseline_local_gas_station_24"
-                app:tint="@color/pill_green_text" />
-
-            <!-- Title & Price Info -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Diesel (Hi-Speed)"
-                    android:textColor="@color/brand_navy"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="₹94 / Litre"
-                    android:textColor="@color/pill_green_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Diesel Stepper & Add Container -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/diesel_minus"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_stepper_action"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="−"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/diesel_quant"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:minWidth="38dp"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="4dp"
-                    android:text="@string/x1"
-                    android:textColor="@color/brand_navy"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <Button
-                    android:id="@+id/diesel_plus"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_stepper_action"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="+"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <Button
-                    android:id="@+id/diesel_add"
-                    android:layout_width="78dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/btn_add_fuel"
-                    app:backgroundTint="@null"
-                    android:gravity="center"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    android:text="+ ADD"
-                    android:textAllCaps="false"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Trust Footer -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Calibrated digital dispensers • 100% quality assured"
+        android:paddingTop="6dp"
+        android:text="Verified Pitstop Partners • Digital Metering • Secure PIN Verification"
         android:textColor="@color/text_muted"
         android:textSize="11sp" />
 

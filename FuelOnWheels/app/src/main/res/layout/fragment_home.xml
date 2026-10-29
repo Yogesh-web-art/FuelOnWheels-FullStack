@@ -67,7 +67,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Real-Time Fuel Dispenser"
+                    android:text="24/7 Mobile Pitstop &amp; Rescue"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>

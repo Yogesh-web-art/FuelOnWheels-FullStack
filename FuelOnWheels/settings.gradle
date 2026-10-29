@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral() // Warning: this repository is going to shut down soon
     }
 }
-rootProject.name = "Refuel Anywhere"
+rootProject.name = "PocketPitstop"
 include ':app'

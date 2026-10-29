@@ -175,4 +175,107 @@ public class FOWViewModel extends ViewModel {
     public void setDriverDetails(String details) {
         this.driverDetails.setValue(details);
     }
+
+    // Service Types: 0 = Fuel (Petrol/Diesel), 1 = EV Fast-Charge, 2 = Roadside Repair, 3 = Community SOS
+    public static final int SERVICE_FUEL = 0;
+    public static final int SERVICE_EV = 1;
+    public static final int SERVICE_REPAIR = 2;
+    public static final int SERVICE_SOS = 3;
+
+    private final MutableLiveData<Integer> selectedServiceType = new MutableLiveData<>(SERVICE_FUEL);
+
+    // EV Charging State
+    private final MutableLiveData<String> evVehicleType = new MutableLiveData<>("4-Wheeler (CCS2)");
+    private final MutableLiveData<String> evPlanTitle = new MutableLiveData<>("");
+    private final MutableLiveData<Integer> evKwh = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> evPrice = new MutableLiveData<>(0);
+
+    // Roadside Repair / Mechanic State
+    private final MutableLiveData<String> repairIssueTitle = new MutableLiveData<>("");
+    private final MutableLiveData<Integer> repairPrice = new MutableLiveData<>(0);
+
+    // Community SOS State
+    private final MutableLiveData<String> sosTitle = new MutableLiveData<>("");
+    private final MutableLiveData<Integer> sosPrice = new MutableLiveData<>(0);
+
+    public int getSelectedServiceType() {
+        Integer val = selectedServiceType.getValue();
+        return val != null ? val : SERVICE_FUEL;
+    }
+
+    public void setSelectedServiceType(int type) {
+        this.selectedServiceType.setValue(type);
+    }
+
+    public String getEvVehicleType() {
+        String val = evVehicleType.getValue();
+        return val != null ? val : "4-Wheeler (CCS2)";
+    }
+
+    public void setEvVehicleType(String type) {
+        this.evVehicleType.setValue(type);
+    }
+
+    public String getEvPlanTitle() {
+        String val = evPlanTitle.getValue();
+        return val != null ? val : "";
+    }
+
+    public void setEvPlanTitle(String title) {
+        this.evPlanTitle.setValue(title);
+    }
+
+    public int getEvKwh() {
+        Integer val = evKwh.getValue();
+        return val != null ? val : 0;
+    }
+
+    public void setEvKwh(int kwh) {
+        this.evKwh.setValue(kwh);
+    }
+
+    public int getEvPrice() {
+        Integer val = evPrice.getValue();
+        return val != null ? val : 0;
+    }
+
+    public void setEvPrice(int price) {
+        this.evPrice.setValue(price);
+    }
+
+    public String getRepairIssueTitle() {
+        String val = repairIssueTitle.getValue();
+        return val != null ? val : "";
+    }
+
+    public void setRepairIssueTitle(String title) {
+        this.repairIssueTitle.setValue(title);
+    }
+
+    public int getRepairPrice() {
+        Integer val = repairPrice.getValue();
+        return val != null ? val : 0;
+    }
+
+    public void setRepairPrice(int price) {
+        this.repairPrice.setValue(price);
+    }
+
+    public String getSosTitle() {
+        String val = sosTitle.getValue();
+        return val != null ? val : "";
+    }
+
+    public void setSosTitle(String title) {
+        this.sosTitle.setValue(title);
+    }
+
+    public int getSosPrice() {
+        Integer val = sosPrice.getValue();
+        return val != null ? val : 0;
+    }
+
+    public void setSosPrice(int price) {
+        this.sosPrice.setValue(price);
+    }
 }

@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="About Refuel Anywhere"
+            android:text="About PocketPitstop"
             android:textColor="@color/brand_navy"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -81,7 +81,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="Refuel Anywhere"
+                        android:text="PocketPitstop"
                         android:textColor="@color/brand_navy"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -90,7 +90,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Version 2.4.0 • On-Demand Fuel Logistics"
+                        android:text="Version 2.4.0 • 24/7 Mobile Pitstop &amp; Roadside Energy"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 
@@ -140,7 +140,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:lineSpacingExtra="3dp"
-                        android:text="Refuel Anywhere transforms energy accessibility by delivering high-grade Petrol and Diesel directly to your parked vehicles, logistics fleets, agricultural equipment, and backup generators. Eliminating long gas station queues and dead-mile travel with smart mobile refuelling."
+                        android:text="PocketPitstop transforms roadside mobility by delivering on-demand Fuel, EV Fast-Charging, and 24/7 Mobile Mechanic Repairs directly to your parked or stranded vehicle. Your pocket pit crew on wheels."
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -297,7 +297,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="© 2026 Refuel Anywhere. All Rights Reserved."
+                android:text="© 2026 PocketPitstop. All Rights Reserved."
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 
