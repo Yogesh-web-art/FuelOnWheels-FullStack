@@ -262,7 +262,7 @@ public class DashboardActivity extends AppCompatActivity {
                             homeState = 0;
                             nextButton.setEnabled(false);
                             deliveryDetails.setVisibility(View.VISIBLE);
-                            startRealtimeOrderTracking(response.orderId, response.road);
+                            startRealtimeOrderTracking(response.orderId, response.road, currentSelectedService);
                         } else {
                             String err = (response != null && response.exception != null) ? response.exception : "Unable to place order. Please try again.";
                             Toast.makeText(DashboardActivity.this, err, Toast.LENGTH_SHORT).show();
@@ -318,7 +318,7 @@ public class DashboardActivity extends AppCompatActivity {
         updateNxtBtn();
     }
 
-    private void startRealtimeOrderTracking(String orderId, Road road) {
+    private void startRealtimeOrderTracking(String orderId, Road road, int serviceType) {
         if (activeOrderRef != null && activeOrderListener != null) {
             activeOrderRef.removeEventListener(activeOrderListener);
         }
@@ -333,17 +333,27 @@ public class DashboardActivity extends AppCompatActivity {
                     if (status != null) {
                         switch (status) {
                             case "PLACED":
-                                eta.setText("Order Placed. Assigning driver...");
+                                eta.setText("Order Placed. Assigning partner...");
                                 break;
                             case "ACCEPTED":
-                                eta.setText("Driver: " + (liveOrder.getDriverName() != null ? liveOrder.getDriverName() : "Rajesh Kumar") + " (Assigned)");
+                                eta.setText((liveOrder.getDriverName() != null ? liveOrder.getDriverName() : "Partner") + " (Assigned)");
                                 break;
                             case "EN_ROUTE":
-                                String etaText = liveOrder.getEtaMinutes() != null ? "ETA: " + liveOrder.getEtaMinutes() + " mins" : "Fuel En Route";
+                                String etaText = liveOrder.getEtaMinutes() != null ? "ETA: " + liveOrder.getEtaMinutes() + " mins" : "Partner En Route";
                                 eta.setText(etaText);
                                 break;
                             case "DELIVERED":
-                                eta.setText("Fuel Delivered Successfully!");
+                                String completedMsg = "Service Completed Successfully!";
+                                if (serviceType == FOWViewModel.SERVICE_FUEL) {
+                                    completedMsg = "Fuel Delivered Successfully!";
+                                } else if (serviceType == FOWViewModel.SERVICE_EV) {
+                                    completedMsg = "EV Fast-Charge Completed!";
+                                } else if (serviceType == FOWViewModel.SERVICE_REPAIR) {
+                                    completedMsg = "Roadside Repair Completed!";
+                                } else if (serviceType == FOWViewModel.SERVICE_SOS) {
+                                    completedMsg = "Emergency Fuel Transferred!";
+                                }
+                                eta.setText(completedMsg);
                                 viewModel.setDelivered(true);
                                 viewModel.setBuildRoad(false);
                                 viewModel.setFuelCoordinates(null);
@@ -354,7 +364,7 @@ public class DashboardActivity extends AppCompatActivity {
                                         deliveryDetails.setVisibility(View.GONE);
                                         nextButton.setEnabled(true);
                                     }
-                                }, 3000);
+                                }, 4000);
                                 break;
                         }
                     }
@@ -371,16 +381,32 @@ public class DashboardActivity extends AppCompatActivity {
         };
 
         activeOrderRef.addValueEventListener(activeOrderListener);
-        simulateDriverMovementInFirebase(activeOrderRef, road);
+        simulateDriverMovementInFirebase(activeOrderRef, road, serviceType);
     }
 
-    private void simulateDriverMovementInFirebase(DatabaseReference orderRef, Road road) {
+    private void simulateDriverMovementInFirebase(DatabaseReference orderRef, Road road, int serviceType) {
+        String partnerName = "Rajesh Kumar (Bunk Pilot)";
+        String partnerPhone = "+91 98765 43210";
+        if (serviceType == FOWViewModel.SERVICE_EV) {
+            partnerName = "Vikram Sen (EV Fast-Charge Specialist)";
+            partnerPhone = "+91 98123 45678";
+        } else if (serviceType == FOWViewModel.SERVICE_REPAIR) {
+            partnerName = "Suresh Kumar (Senior Mobile Mechanic)";
+            partnerPhone = "+91 97654 32109";
+        } else if (serviceType == FOWViewModel.SERVICE_SOS) {
+            partnerName = "Rahul Verma (Verified Samaritan Biker)";
+            partnerPhone = "+91 96543 21098";
+        }
+
+        final String finalPartnerName = partnerName;
+        final String finalPartnerPhone = partnerPhone;
+
         simulationHandler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             orderRef.child("orderStatus").setValue("ACCEPTED");
-            orderRef.child("driverName").setValue("Rajesh Kumar");
-            orderRef.child("driverPhone").setValue("+91 98765 43210");
-        }, 3000);
+            orderRef.child("driverName").setValue(finalPartnerName);
+            orderRef.child("driverPhone").setValue(finalPartnerPhone);
+        }, 2000);
 
         simulationHandler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
@@ -396,13 +422,15 @@ public class DashboardActivity extends AppCompatActivity {
                     final int stepIndex = i;
                     final GeoPoint point = points.get(Math.min(stepIndex * interval, totalPoints - 1));
                     final int etaRemain = Math.max(1, (int) Math.round((road.mDuration / 60) * (1.0 - (double) stepIndex / steps)));
+                    final double distRemain = Math.max(0.1, road.mLength * (1.0 - (double) stepIndex / steps));
 
                     simulationHandler.postDelayed(() -> {
                         if (isFinishing() || isDestroyed()) return;
                         orderRef.child("driverLatitude").setValue(point.getLatitude());
                         orderRef.child("driverLongitude").setValue(point.getLongitude());
                         orderRef.child("etaMinutes").setValue(String.valueOf(etaRemain));
-                    }, (long) (i + 1) * 2500);
+                        dashboard_tv_distance.setText(String.format(Locale.getDefault(), "%.2f km (~%d mins)", distRemain, etaRemain));
+                    }, (long) (i + 1) * 2000);
                 }
 
                 simulationHandler.postDelayed(() -> {
@@ -412,14 +440,15 @@ public class DashboardActivity extends AppCompatActivity {
                     orderRef.child("driverLongitude").setValue(lastPoint.getLongitude());
                     orderRef.child("orderStatus").setValue("DELIVERED");
                     orderRef.child("etaMinutes").setValue("0");
-                }, (long) (steps + 1) * 2500);
+                    dashboard_tv_distance.setText("Arrived (0.0 km)");
+                }, (long) (steps + 1) * 2000);
             } else {
                 simulationHandler.postDelayed(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     orderRef.child("orderStatus").setValue("DELIVERED");
-                }, 15000);
+                }, 12000);
             }
-        }, 6000);
+        }, 4000);
     }
 
     public void updateNxtBtn() {
